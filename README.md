@@ -1,0 +1,256 @@
+
+# SW_HMSG_HAT_V02
+
+## Structure
+
+| Path                               | Purpose                                                                                                                             |
+|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| _build                             | The [CMake build tree](https://cmake.org/cmake/help/latest/manual/cmake.1.html#introduction-to-cmake-buildsystems), can be deleted. |
+| cmake                              | Generated [CMake](https://cmake.org/) files. May be deleted if user.cmake has not been added                                        |
+| .vscode                            | See [VSCode](https://code.visualstudio.com/docs/getstarted/settings)                                                                |
+| .vscode\settings.json              | Workspace specific settings                                                                                                         |
+| .vscode\SW_HMSG_HAT_V02.mplab.json | The MPLAB project file, should not be deleted                                                                                       |
+| out                                | Final build artifacts                                                                                                               |
+
+## Remarks about VS Code:
+An error message may show up upon opening the MPLAB project folder about the path length: 
+```text
+CMake Generate successful but is exceeding path limitations. (exit code 0)
+```
+A quick fix is to use the windows command subst to create a virtual drive mapped to the source directory with a shorter path: 
+```powershell
+subst X: C:\Long\Path\To\Your\Project
+```
+Then, instead of opening the project on C:\Long\Path\To\Your\Project, the shorter path on X: could be used when opening the folder in VS Code.
+
+## MCC Config - Initial Steps
+- Open the Command Palette (Ctrl+Shift+P).
+- Select MPLAB MCC: Launch.
+- Select "Create New MCC Config"
+- Select "MPLAB Project" (the current project, not a new standalone config)
+- Select "Proceed With Default Values"
+- After startup (takes a while), on MCC, click on "Application Builder"
+> REMARK: For configuring each module, click on the gear after the name of the module. If needed, click on zoom to view the modules better.
+
+## MCC Device Resources
+On the left menu, select "Device Resource", and add the following items:
+- ADC0
+- I2C0_Client
+- NVM 
+- Timer: TCA0
+- Timer: TCB0
+- Timer: Timer
+- System: BOD
+- System: BOD
+- System: RSTCTRL
+- System: WDT
+> REMARK: ADC0 is for temperature reading. TCB0 is for periodic interrupts. TCA0 is for PWM.
+
+
+## MCC Config - Modules
+### System
+#### Interrupt Manager
+- Global Interrupt Enable: **ON** (button in _ON_)
+- Round-robin Scheduling Enable: **OFF** (button in _OFF_)
+- Interrupt Level Priority: **0**
+- Interrupt Vector with High Priority: **0**
+
+#### Configuration Bits
+- APPEND: 0 ≤ **0**
+- BOD Operation in Active Mode: **Enabled**
+- BOD Level: **2.6 V**
+- BOD Sample Frequency: **1kHz**
+- BOD Operation in Sleep Mode: **Enabled**
+- BOOTEND: 0 ≤ **0**
+- OSCCFG - Frequency Select: **20 MHz**
+- SYSCFG0 - CRC Source: **Disable CRC**
+- SYSCFG0 - CRC Source: **Disable CRC**
+- EEPROM Save: **OFF** (button in _OFF_)
+- Reset Pin Configuration: **UPDI Mode**
+- SYSCFG1 - Startup Time: **4ms**
+- WDTCFG - Watchdog Timeout Period: **32 cycles (32ms)**
+- WDTCFG - Watchdog Window Timeout Period: **8 cycles (8ms)**
+
+> REMARK: Do not change "Reset Pin Configuration"! Always use "UPDI Mode" or the module will have to be programmed with high voltage pulse on UPDI pin.
+
+#### CLKCTRL
+- Generate Initializer Code: **Initialize all registers**
+- CLKCTRL Settings - Clock Source: **20MHz internal oscillator**
+- CLKCTRL Settings - Internal Oscillator Frequency: **20 MHz**
+- CLKCTRL Settings - Prescaler enable: **ON** (button in _ON_)
+- CLKCTRL Settings - Prescaler division: **4X**
+- CLKCTRL Settings - System clock out: **OFF** (button in _OFF_)
+- Advanced Settings - lock enable: **OFF** (button in _OFF_)
+- Advanced Settings - Run standby 20MHz Oscillator: **OFF** (button in _OFF_)
+- Advanced Settings - Run standby 32.768kHz Oscillator: **OFF** (button in _OFF_)
+
+#### Pins
+- Pin Name: **PA1** 
+  - Module: **TWAI0** _(should already be set - greyed out)_
+  - Function: **SDA** _(should already be set - greyed out)_
+  - Direction: **in/out** _(should already be set - greyed out)_
+  - Custom Name: **IO_PA1**
+  - Start Hugh: **No** (_not selected_)
+  - Inverted I/O: **No** (_not selected_)
+  - Pull-Up: **No** (_not selected_)
+  - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
+
+- Pin Name: **PA2** 
+  - Module: **TWAI0** _(should already be set - greyed out)_
+  - Function: **SCL** _(should already be set - greyed out)_
+  - Direction: **in/out** _(should already be set - greyed out)_
+  - Custom Name: **IO_PA2**
+  - Start Hugh: **No** (_not selected_)
+  - Inverted I/O: **No** (_not selected_)
+  - Pull-Up: **No** (_not selected_)
+  - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
+
+- Pin Name: **PA3**
+  - Module: **Pins**
+  - Function: **GPIO**
+  - Direction: **output**
+  - Custom Name: **IO_PA3**
+  - Start Hugh: **No** (_not selected_)
+  - Inverted I/O: **No** (_not selected_)
+  - Pull-Up: **No** (_not selected_)
+  - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
+
+- Pin Name: **PA6**
+  - Module: **Pins**
+  - Function: **GPIO**
+  - Direction: **input**
+  - Custom Name: **SUP_SHDN**
+  - Start Hugh: **No** (_not selected_)
+  - Inverted I/O: **No** (_not selected_)
+  - Pull-Up: **No** (_not selected_)
+  - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
+
+- Pin Name: **PA7**
+  - Module: **TCA0**
+  - Function: **WO0**
+  - Direction: **output**
+  - Custom Name: **LED_uC**
+  - Start Hugh: **No** (_not selected_)
+  - Inverted I/O: **No** (_not selected_)
+  - Pull-Up: **No** (_not selected_)
+  - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
+
+#### WDT
+- Lock enable: **ON** (button in _ON_)
+
+#### RSTCTRL
+- RSTCTRL Enable: **ON** _(should already be set - greyed out)_
+
+#### BOD
+- BOD Operation in Active Mode: **Enabled**
+- BOD Level: **2.6 V**
+- BOD Sample Frequency: **1kHz**
+- BOD Operation in Sleep Mode: **Enabled**
+- VLM Interrupt Enable: **OFF** (button in _OFF_)
+- VLM Interrupt Flag: **OFF** (button in _OFF_)
+- VLM Configuration: **Interrupt when supply goes below VLM level**
+- VLM Level: **VLM Level**
+
+### Main
+#### TCA0
+- Custom Name: **TCA0**
+- Generate Initializer Code: **Generate Initializer Code**
+- Timer Enable: **ON** (button in _ON_)
+- Run Standby Mode: **OFF** (button in _OFF_)
+- Timer Enable: **ON** (button in _ON_)
+- Run Standby Mode: **OFF** (button in _OFF_)
+- Timer Mode: **16 Bit (Normal)**
+- Clock Select: **System Clock / 4**
+- Count Direction: **UP**
+- Requested Period: 2.4μs ≤ **52.4288ms** ≤ 52.4288ms
+- Event Action A: **POSEDGE**
+- Waveform Generation Mode: **Single Slope PWM**
+- Compare Channel 0 Enable: **ON** (button in _ON_)
+- Duty Cycle 0 (%): 0 ≤ **0** ≤ 100
+- Compare Channel 1 Enable: **OFF** (button in _OFF_)
+- Compare Channel 2 Enable: **OFF** (button in _OFF_)
+- Overflow Interrupt Enable: **OFF** (button in _OFF_)
+- Compare Channel 0 Interrupt Enable: **OFF** (button in _OFF_)
+- Compare Channel 1 Interrupt Enable: **OFF** (button in _OFF_)
+- Compare Channel 2 Interrupt Enable: **OFF** (button in _OFF_)
+- Generate ISR: **OFF** (button in _OFF_)
+
+#### Timer0
+- Custom Name: **Timer0**
+- Timer Enable: **ON** (button in _ON_)
+- Interrupt Driven: **ON** (button in _ON_)
+- Requested Timer Period: 400ns ≤ **20**ms ≤ 26.214ms
+- Timer PLIB Selector: **TCB0**
+##### Timer0 - TCB0
+- Custom Name: **TCB0**
+- Initializer Code Generate: **Initialize all registers**
+- Timer Enable: **ON** _(should already be set - greyed out)_
+- Clock Selection: **CLKDIV2**
+- Timer Mode: **INT** _(should already be set - greyed out)_
+- Requested Timeout: 400ns ≤ **20**ms ≤ 26.214ms _(should already be set - greyed out)_
+- Actual Timeout: **20**ms _(should already be set - greyed out)_
+- Run Standby: **OFF** _(should already be set - greyed out)_
+- Synchronize Update: **OFF** _(should already be set - greyed out)_
+- Asynchronous Enable: **OFF** _(should already be set - greyed out)_
+- Run in Debug Mode: **OFF** _(should already be set - greyed out)_
+- Edge Event: **OFF** _(should already be set - greyed out)_
+- Event Input Capture Enable: **OFF** _(should already be set - greyed out)_
+- Noise Cancellation Filter Enable: **OFF** _(should already be set - greyed out)_
+- Pin Output Enable: **OFF** _(should already be set - greyed out)_
+- ISR Generate: **ON** _(should already be set - greyed out)_
+- Capture/Timeout Interrupt Enable: **ON** _(should already be set - greyed out)_
+
+#### NVM
+- Generate Flash APIs: **ON** (button in _ON_)
+- Place Functions in Custom Segment: **OFF** (button in _OFF_)
+- Application Code Section Write Protect: **OFF** (button in _OFF_)
+- Boot Section Lock: **OFF** (button in _OFF_)
+- Generate EEPROM APIs: **ON** (button in _ON_)
+- Generate Signature Row APIs: **OFF** (button in _OFF_)
+- Generate Fuse APIs: **OFF** (button in _OFF_)
+- Enable EEPROM Ready Interrupt: **OFF** (button in _OFF_)
+
+#### ADC0
+- Custom Name: **ADC0**
+- Hardware Settings - Enable ADC: **ON** (button in _ON_)
+- Hardware Settings - Input Configuration: **Single-Ended**
+- Hardware Settings - Result Alignment: **Right**
+- Hardware Settings - Resolution Selection: **10-bit mode**
+- Hardware Settings - Positive Input Channel: **TEMPSENSE**
+- Hardware Settings - Positive Voltage Reference: **INTREF**
+- Hardware Settings - Start Event Input Enable: **OFF** (button in _OFF_)
+- Hardware Settings - Free-Running Mode Enable: **ON** (button in _ON_)
+- Hardware Settings - Run in Standby Mode Enable: **OFF** (button in _OFF_)
+- Hardware Settings - Run in Debug Mode Enable: **OFF** (button in _OFF_)
+- Hardware Settings - Sample Capacitance Selection: **ON** (button in _ON_)
+- Computation Settings - Computation Mode: **Basic**
+- Computation Settings - Window Comparator Mode: **No Window Comparison**
+- Computation Settings - Upper Threshold: -32768 ≤ **0**
+- Computation Settings - Lower Threshold: -32768 ≤ **0**
+- Clock Settings - Clock Prescaler: **CLK_PER divided by 2**
+- Clock Settings - Duty Cycle: **DUTY50**
+- Clock Settings - Initialization Delay: **DLY32**
+- Clock Settings - Automatic Sampling Delay Variation: **ASVOFF**
+- Clock Settings - Sampling Delay: 0 ≤ **0**
+- Clock Settings - Sample Length: 0 ≤ **30**
+- Interrupt Settings - Result Ready Interrupt Enable: **OFF** (button in _OFF_)
+- Interrupt Settings - Window Comparator Interrupt Enable: **OFF** (button in _OFF_)
+- Interrupt Settings - Generate Interrupt APIs: **ON** (button in _ON_)
+
+#### I2C0_Client
+- Custom Name: **I2C0_Client**
+- Clock Stretching: **ON** _(should already be set - greyed out)_
+- Client Address: 0x0 ≤ **0x1E** ≤ 0x7F
+- Client Mask: 0x0 ≤ **0x7F** ≤ 0x7F
+- I2C Client PLIB Selector: **TWI0**
+##### I2C0_Client - TWI0_Peripheral
+- Interrupt Driven: **ON** (button in _ON_)
+- General Call Address Recognition: **ON** (button in _ON_)
+- Address/Stop Interrupt Enable: **ON** (button in _ON_)
+- Stop Interrupt Enable: **ON** _(should already be set - greyed out)_
+
+#### Main 
+- Generate main.c file: **ON** _(should already be set - greyed out)_
+
+## MCC Generate
+On the bottom tab, click on "Notifications" to see any messagens that could prevent code generation. After checking, on the left menu, below the MCC Tab, click on "Generate" button.

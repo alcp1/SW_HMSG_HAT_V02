@@ -1,0 +1,88 @@
+{
+    "version": "1.9",
+    "configurations": [
+        {
+            "name": "default",
+            "id": "conf1",
+            "device": "ATtiny402",
+            "imagePath": "./out/SW_HMSG_HAT_V02/default.elf",
+            "packs": [
+                {
+                    "name": "ATtiny_DFP",
+                    "vendor": "Microchip",
+                    "version": "3.4.278"
+                }
+            ],
+            "fileSet": "default",
+            "toolchain": "default-XC8"
+        }
+    ],
+    "propertyGroups": [
+        {
+            "name": "default-XC8",
+            "type": "toolchain",
+            "provider": "microchip.toolchains:xc8@3.10",
+            "properties": {
+                "compiler.isolate-each-function": true,
+                "compiler.optimization-level": "-O1",
+                "compiler.place-data-into-section": true,
+                "linker.heap-size": "0",
+                "linker.remove-unused-sections": true,
+                "compiler++.isolate-each-function": true,
+                "compiler++.optimization-level": "-O1"
+            }
+        }
+    ],
+    "fileSets": [
+        {
+            "name": "default",
+            "files": [
+                {
+                    "include": "**/*",
+                    "exclude": "**/(_build|out|cmake|.vscode)/**/*"
+                },
+                "My_MCC_Config/mcc/mcc_generated_files/reset/rstctrl.h",
+                "My_MCC_Config/mcc/mcc_generated_files/reset/src/rstctrl.c",
+                "My_MCC_Config/mcc/mcc_generated_files/nvm/nvm.h",
+                "My_MCC_Config/mcc/mcc_generated_files/nvm/src/nvm.c",
+                "My_MCC_Config/mcc/mcc_generated_files/adc/src/adc0.c",
+                "My_MCC_Config/mcc/mcc_generated_files/adc/adc0.h",
+                "My_MCC_Config/mcc/mcc_generated_files/adc/adc_types.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/interrupt.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/src/interrupt.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/src/clock.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/clock.h",
+                "My_MCC_Config/mcc/mcc_generated_files/i2c_client/i2c_client_types.h",
+                "My_MCC_Config/mcc/mcc_generated_files/i2c_client/twi0.h",
+                "My_MCC_Config/mcc/mcc_generated_files/i2c_client/i2c_client_interface.h",
+                "My_MCC_Config/mcc/mcc_generated_files/i2c_client/src/twi0.c",
+                "My_MCC_Config/mcc/mcc_generated_files/timer/tca0.h",
+                "My_MCC_Config/mcc/mcc_generated_files/timer/tca0_deprecated.h",
+                "My_MCC_Config/mcc/mcc_generated_files/timer/src/tca0.c",
+                "My_MCC_Config/mcc/mcc_generated_files/vref/vref.h",
+                "My_MCC_Config/mcc/mcc_generated_files/vref/src/vref.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/interrupt_avr8.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/src/config_bits.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/compiler.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/utils_assert.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/src/system.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/atomic.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/assembler.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/assembler/gas.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/utils.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/utils/assembler/iar.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/src/protected_io.S",
+                "My_MCC_Config/mcc/mcc_generated_files/system/system.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/ccp.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/protected_io.h",
+                "My_MCC_Config/mcc/main.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/src/pins.c",
+                "My_MCC_Config/mcc/mcc_generated_files/system/port.h",
+                "My_MCC_Config/mcc/mcc_generated_files/system/pins.h",
+                "My_MCC_Config/mcc/mcc_generated_files/timer/src/tcb0.c",
+                "My_MCC_Config/mcc/mcc_generated_files/timer/tcb0.h",
+                "My_MCC_Config/mcc/mcc_generated_files/timer/timer_interface.h"
+            ]
+        }
+    ]
+}
