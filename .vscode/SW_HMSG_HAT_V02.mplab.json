@@ -24,12 +24,14 @@
             "provider": "microchip.toolchains:xc8@3.10",
             "properties": {
                 "compiler.isolate-each-function": true,
-                "compiler.optimization-level": "-O1",
+                "compiler.optimization-level": "-O2",
                 "compiler.place-data-into-section": true,
                 "linker.heap-size": "0",
                 "linker.remove-unused-sections": true,
                 "compiler++.isolate-each-function": true,
-                "compiler++.optimization-level": "-O1"
+                "compiler++.optimization-level": "-O2",
+                "HI-TECH-COMP.preprocess-assembler": true,
+                "HI-TECH-COMP.optimization-level": "-O2"
             }
         }
     ],
@@ -75,13 +77,13 @@
                 "My_MCC_Config/mcc/mcc_generated_files/system/system.h",
                 "My_MCC_Config/mcc/mcc_generated_files/system/ccp.h",
                 "My_MCC_Config/mcc/mcc_generated_files/system/protected_io.h",
-                "My_MCC_Config/mcc/main.c",
                 "My_MCC_Config/mcc/mcc_generated_files/system/src/pins.c",
                 "My_MCC_Config/mcc/mcc_generated_files/system/port.h",
                 "My_MCC_Config/mcc/mcc_generated_files/system/pins.h",
                 "My_MCC_Config/mcc/mcc_generated_files/timer/src/tcb0.c",
                 "My_MCC_Config/mcc/mcc_generated_files/timer/tcb0.h",
-                "My_MCC_Config/mcc/mcc_generated_files/timer/timer_interface.h"
+                "My_MCC_Config/mcc/mcc_generated_files/timer/timer_interface.h",
+                "My_MCC_Config/mcc/main.c"
             ]
         }
     ]

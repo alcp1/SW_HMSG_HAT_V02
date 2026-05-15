@@ -41,4 +41,8 @@ _build/
 !cmake/**/user.cmake
 cmake/**/.generated/*
 cmake/**/CMake*
-out/
+out/**/default*
+out/**/*.xml
+out/**/*.elf
+out/**/*.lst
+out/**/*.map

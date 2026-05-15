@@ -1,4 +1,4 @@
- //----------------------------------------------------------------------------//
+//----------------------------------------------------------------------------//
 //                               OBJECT HISTORY                               //
 //----------------------------------------------------------------------------//
 //  REVISION |    DATE     |                               |      AUTHOR      //
@@ -7,15 +7,16 @@
 // - First version                                                            //
 //----------------------------------------------------------------------------//
 
-#include "mcc_generated_files/system/system.h"
-#include "../../adc.h"
-#include "../../io.h"
-#include "../../led.h"
+/*
+ * Includes
+ */
+#include <stdio.h>
+#include "My_MCC_Config/mcc/mcc_generated_files/system/system.h"
+#include "io.h"
 
 //----------------------------------------------------------------------------//
 // INTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
-#define VERSION "01.00"
 
 //----------------------------------------------------------------------------//
 // INTERNAL TYPES
@@ -24,46 +25,42 @@
 //----------------------------------------------------------------------------//
 // INTERNAL GLOBAL VARIABLES
 //----------------------------------------------------------------------------//
-static volatile unsigned char g_mainCounter;
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
 //----------------------------------------------------------------------------//
 
-// 15ms periodic callback
-void Timer_Callback_20ms(void)
+//----------------------------------------------------------------------------//
+// EXTERNAL FUNCTIONS
+//----------------------------------------------------------------------------//
+/* IO Initialization */
+void io_init(void)
 {
-    g_mainCounter++;
 }
 
-// main function
-int main(void)
+/* Sets SHDN */
+void io_setSHDN(unsigned char state)
 {
-    // Init generated code
-    SYSTEM_Initialize();
-    // Set timer B callback
-    TCB0_CaptureCallbackRegister(Timer_Callback_20ms);    
-    // Init modules
-    io_init();
-    led_init();
-    adc_init();
-    // Endless loop
-    g_mainCounter = 0;
-    while(1)
+    if(state)
     {
-        // Check counter
-        if(g_mainCounter > 0)
-        {
-            //-------------------------
-            // CODE RUNS EVERY 15ms
-            //-------------------------
-            // reset counter            
-            g_mainCounter = 0;
-            // Clear Watchdog
-            __builtin_avr_wdr();
-            // periodic functions
-            adc_periodic();
-            led_periodic();
-        }
-    }    
+        // Set SHDN as output with 0
+        SUP_SHDN_SetLow();
+        SUP_SHDN_SetDigitalOutput();
+        SUP_SHDN_SetLow();
+    }
+    else
+    {
+        // Set SHDN as input
+        SUP_SHDN_SetDigitalInput();
+    }
+}
+
+/* Sets LED Duty Cycle */
+void io_setLED(unsigned char duty)
+{
+    unsigned int temp = 0;
+    // Casting (uchar to uint)
+    temp = (unsigned int)(duty);
+    // Set Duty Cycle for LED output
+    TCA0_Compare0BufferSet(temp);
 }
