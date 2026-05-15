@@ -17,36 +17,24 @@ extern "C" {
 //----------------------------------------------------------------------------//
 // EXTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
-#define IO_INACTIVE 0
-#define IO_ACTIVE   1
+#define IO_SET_SHDN_ACTIVE()            \
+    do                                  \
+    {                                   \
+        SUP_SHDN_SetLow();              \
+        SUP_SHDN_SetDigitalOutput();    \
+        SUP_SHDN_SetLow();              \
+    } while (0)
+
+#define IO_SET_SHDN_INACTIVE()          \
+    do                                  \
+    {                                   \
+        SUP_SHDN_SetDigitalInput();     \
+    } while (0)
 
 //----------------------------------------------------------------------------//
 // EXTERNAL FUNCTIONS
 //----------------------------------------------------------------------------//
-/**
- * IO Initialization.
- * 
- * \param   nothing
- * \return  nothing
- */
-extern void io_init(void);
 
-/**
- * Sets SHDN.
- * 
- * \param   IO_INACTIVE if inactive (SHDN will be set as input), 
- *          IO_ACTIVE if active (STDH will be set as output with 0)
- * \return  nothing
- */
-extern void io_setSHDN(unsigned char state);
-
-/**
- * Sets LED Duty Cycle.
- * 
- * \param   duty: 0 = 0% ... 255 = 100%
- * \return  nothing
- */
-extern void io_setLED(unsigned char duty);
 
 #ifdef __cplusplus
 }

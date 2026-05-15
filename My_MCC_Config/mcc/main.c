@@ -30,7 +30,7 @@ static volatile unsigned char g_mainCounter;
 // INTERNAL FUNCTIONS
 //----------------------------------------------------------------------------//
 
-// 15ms periodic callback
+// 20ms periodic callback
 void Timer_Callback_20ms(void)
 {
     g_mainCounter++;
@@ -44,7 +44,7 @@ int main(void)
     // Set timer B callback
     TCB0_CaptureCallbackRegister(Timer_Callback_20ms);    
     // Init modules
-    io_init();
+    IO_SET_SHDN_INACTIVE();
     led_init();
     adc_init();
     // Endless loop
@@ -55,7 +55,7 @@ int main(void)
         if(g_mainCounter > 0)
         {
             //-------------------------
-            // CODE RUNS EVERY 15ms
+            // CODE RUNS EVERY 20ms
             //-------------------------
             // reset counter            
             g_mainCounter = 0;

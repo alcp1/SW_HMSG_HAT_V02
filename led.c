@@ -11,18 +11,18 @@
  * Includes
  */
 #include <stdio.h>
-#include "io.h"
+#include "My_MCC_Config/mcc/mcc_generated_files/system/system.h"
 #include "led.h"
 
 //----------------------------------------------------------------------------//
 // INTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
 // INIT STATE TIMING
-#define LED_INIT_TIME           (1500U/20)      // 1,5s @ 20ms period
-#define LED_INIT_DUTY_INCREMENT (255U/1500U/20) // 1,5s @ 20ms period
-#define LED_DUTY_INIT           (127)           // 50%
-#define LED_TON_INIT            (40U/20)        // 40ms @ 20ms period
-#define LED_TOFF_INIT           (460U/20)       // 460ms @ 20ms period
+#define LED_INIT_TIME           (1700U/20)          // 1,7s @ 20ms period
+#define LED_INIT_DUTY_INCREMENT (255U/(1700U/20))   // 1,7s @ 20ms period
+#define LED_DUTY_INIT           (127)               // 50%
+#define LED_TON_INIT            (40U/20)            // 40ms @ 20ms period
+#define LED_TOFF_INIT           (460U/20)           // 460ms @ 20ms period
 // STATE
 enum
 {
@@ -44,7 +44,8 @@ static volatile unsigned char g_configduty;
 static volatile unsigned char g_configOnTime;
 static volatile unsigned char g_configOffTime;
 static volatile unsigned char g_configTotalTime;
-static volatile unsigned char g_duty;   // 0 = 0%, 255 = 100%
+static volatile unsigned char g_duty8;   // 0 = 0%, 255 = 100%
+static volatile unsigned int  g_duty16;
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
@@ -65,11 +66,12 @@ void led_init(void)
     g_configduty = LED_DUTY_INIT;
     g_configTotalTime = LED_TON_INIT + LED_TOFF_INIT;
     // Set duty to 0%
-    g_duty = 0;
+    g_duty8 = 0;
+    g_duty16 = 0;
     // Set total time to 0
     g_totalTime = 0;
     // Init LED with 0% duty
-    io_setLED(0);
+    TCA0_Compare0BufferSet(g_duty16);
 }
 
 /* Periodic function */
@@ -92,13 +94,13 @@ void led_periodic(void)
             }
             else if(g_totalTime == LED_INIT_TIME)
             {
-                // Duty = 100%
-                g_duty = 255;
+                // Duty = 100% = 255
+                g_duty8 = 255;
             }
             else
             {
                 // Duty = linear increase
-                g_duty += LED_INIT_DUTY_INCREMENT;
+                g_duty8 += LED_INIT_DUTY_INCREMENT;
             }
             break;        
         //--------------------
@@ -115,12 +117,12 @@ void led_periodic(void)
             if(g_totalTime >= g_configOffTime)
             {
                 // Duty = configured value
-                g_duty = g_configduty;
+                g_duty8 = g_configduty;
             }
             else
             {
                 // Duty = 0% during OFF time
-                g_duty = 0;
+                g_duty8 = 0;
             }
             break;
         default:
@@ -128,7 +130,9 @@ void led_periodic(void)
             break;
     }
     // Update LED output with Duty cycle
-    io_setLED(g_duty);
+    g_duty16 = (unsigned int)(g_duty8);
+    // Set Duty Cycle for LED output
+    TCA0_Compare0BufferSet(g_duty16);
 }
 
 /* Sets LED PWM Duty Cycle. */
