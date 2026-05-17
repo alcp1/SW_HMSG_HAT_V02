@@ -71,7 +71,7 @@ extern void led_getLedConfig(ledConfig* config);
  * \param   nothing
  * \return  nothing
  */
-extern void led_requestTrasnmitSignaling(void);
+extern void led_requestTransmitSignaling(void);
 
 
 #ifdef __cplusplus

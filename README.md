@@ -254,3 +254,31 @@ On the left menu, select "Device Resource", and add the following items:
 
 ## MCC Generate
 On the bottom tab, click on "Notifications" to see any messagens that could prevent code generation. After checking, on the left menu, below the MCC Tab, click on "Generate" button.
+
+## I2C
+### I2C Address
+The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more details). Any address different than this will be ignored.
+
+### I2C Registers
+|Register Address|Name|Read/Write|Description|
+|----------------|----|----------|-----------|
+|**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x11**: Reboot ATTiny <br> • **0x12**: Cycle Power in 20 seconds<br> • **Other values**: Ignored|
+|**0x01**| Raspberry Pi Watchdog Enable | Written by **Host** only. | If set to **0x63**, ATTiny will update the _Reset Timer_ (see register address 0x02 and 0x03) every second, and if it reaches the _Reset Timer Limit_ (see register address 0x03 and 0x04), the ATtiny will cycle the power.|
+|**0x02**<br>**0x03**| Reset Timer | Written by **Host** and **Client**. | _Reset Timer_ is a 16 bit counter updated every second. Register Address **0x02** contains the LSB, and Register Address **0x03** contains the MSB.|
+|**0x04**<br>**0x05**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value chacked against _Reset Timer_. Register Address **0x04** contains the LSB, and Register Address **0x05** contains the MSB.|
+|**0x06**<br>**0x07**| Reset Counter | Written by **Host** and **Client**. | _Reset Counter_ is a 16 bit value saven on the ATTiny EEPROM that counts how many times the ATTiny has cycled the power, triggered by the watchdog mechanism (_Reset Timer_ > _Reset Timer Limit_). Register Address **0x06** contains the LSB, and Register Address **0x07** contains the MSB.|
+|**0x08**<br>**0x09**<br>**0x0A**| LED Active Mode parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when in active mode (after initialization): <br>• Register **0x08**: The LED duty cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x09**: The LED ON time (in seconds). <br>• Register **0x0A**: The LED OFF time (in seconds).|
+|**0x0B**<br>**0x0C**<br>**0x0D**| LED I2C Transmit Signaling parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when an I2C transmission finishes - end bit detected:<br>• Register **0x0B**: The LED duty cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0C**: The LED ON time (in seconds). <br>• Register **0x0D**: The LED OFF time (in seconds).|
+|**0x0E**| ATTiny Reset Cause | Written by **Client** only. | See the Register **RSTFR** in the ATTiny402 datasheet.|
+|**0x0F**<br>**0x10**| ATTiny ADC Reading (Temperature) | Written by **Client** only. | Latest ADC Reading for the ATTiny temperature. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register Address **0x0F** contains the LSB, and Register Address **0x10** contains the MSB.|
+|**0x11**<br>**0x12**| ATTiny Sigrow Offset / Gain | Written by **Client** only. | Device calibration for the ATTiny temperature measuremntes. Updated only at reset, as it is fexed for each ATTiny device. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register **0x11**: Sigrow Offset. <br>• Register **0x12**: Sigrow Gain.|
+
+## LED
+- After reset, the LED will linearly increase the duty cycle from 0% to 100% (init mode).
+- After this init, it will go to active mode, where the LEDs will be turned ON at a configurable time (_Active mode **ON** time_) and duty cycle (_Active mode **duty** cycle_), then will be turned OFF for a specific, configurable time (_Active mode **OFF** time_).
+- When an I2C transmission finishes (stop bit detected), the LEDs will be turned ON at a configurable time (_Transmit Signaling **ON** time_) and duty cycle (_Transmit Signaling **duty** cycle_), then will be turned OFF for a specific, configurable time (_Transmit Signaling **OFF** Time_).
+> REMARK: Transmit Signaling has priority over Active mode, meaning if the LED should be ON for Transmit Signaling, but OFF for Active mode, it will be ON.
+
+## ADC
+- The ADC module just performs the ADC conversion for the tempoerature channel. The temperature calculation can be performed by the Raspberry Pi using this reading and the temperature calibration fields in order to save program space on the ATTiny.
+

@@ -20,7 +20,7 @@
 // GENERAL
 #define VERSION             "01.00"
 #define SECONDS_TICKS       (1000U/20)
-#define I2C_REG_ADDR_SIZE   20
+#define I2C_REG_ADDR_SIZE   19
 #define RPI_WDT_ENABLE_FLAG 0x63 // Arbitrary number
 #define RPI_MIN_RESET_COUNT 300 // 5 minutes
 // EEPROM - OFFSETS
@@ -53,7 +53,7 @@ static volatile uint16_t g_resetTimer;
 static volatile uint16_t g_resetTimerLimit;
 static volatile uint8_t g_resetCause;
 static volatile uint16_t g_resetCounter;
-static volatile int8_t g_ADCReading;
+static volatile int16_t g_ADCReading;
 static volatile int8_t g_sigrow_offset;
 static volatile uint8_t g_sigrow_gain;
 static volatile ledConfig g_ledConfigTemp;
@@ -166,14 +166,109 @@ void initI2COutBuffer(void)
     g_I2COutData[13] = g_I2CInData[13];
     // - Data to be updated by ATTiny periodically / on power up
     g_I2COutData[14] = g_resetCause; // power up only
-    g_I2COutData[15] = (uint8_t)(g_ADCReading); //periodic update
-    g_I2COutData[16] = (uint8_t)(g_sigrow_offset); // power up only
-    g_I2COutData[17] = g_sigrow_gain; // power up only    
+    g_I2COutData[15] = 0; // ADC Reading - periodic update
+    g_I2COutData[16] = 0; // ADC Reading - periodic update
+    g_I2COutData[17] = (uint8_t)(g_sigrow_offset); // power up only
+    g_I2COutData[18] = g_sigrow_gain; // power up only    
 }
 
 void initI2CSyncData(void)
-{
-    // Check data
+{    
+    //-----------------------------
+    // UPDATE DATA WRITTEN BY CLIENT
+    //-----------------------------
+    g_I2COutData[2] = (uint8_t)(g_resetTimer & 0xFF);
+    g_I2COutData[3] = (uint8_t)((g_resetTimer >> 8) & 0xFF);
+    g_I2COutData[15] = (uint8_t)(g_ADCReading & 0xFF);
+    g_I2COutData[16] = (uint8_t)((g_ADCReading >> 8) & 0xFF);
+
+    //-----------------------------
+    // UPDATE DATA WRITTEN BY HOST
+    // - HOST DATA: Check data with immediate update
+    //-----------------------------
+    if(g_isI2CInDataUpdated[0])
+    {
+        // Update internal data
+        g_rPiCommand = g_I2CInData[0];
+        // Update I2C Buffers
+        g_I2COutData[0] = g_I2CInData[0];
+        // Clear update
+        g_isI2CInDataUpdated[0] = false;
+    }
+    if(g_isI2CInDataUpdated[2] || g_isI2CInDataUpdated[3])
+    {
+        // Update internal data
+        g_resetTimer = (uint16_t)(g_I2CInData[3] << 8);
+        g_resetTimer += g_I2CInData[2];
+        // Update I2C Buffers
+        g_I2COutData[2] = g_I2CInData[2];
+        g_I2COutData[3] = g_I2CInData[3];
+        // Clear update
+        g_isI2CInDataUpdated[2] = false;
+        g_isI2CInDataUpdated[3] = false;
+    }
+    if(g_isI2CInDataUpdated[8] || g_isI2CInDataUpdated[9] || 
+        g_isI2CInDataUpdated[10] || g_isI2CInDataUpdated[11] ||
+        g_isI2CInDataUpdated[12] || g_isI2CInDataUpdated[13])
+    {
+        // Update internal data
+        g_ledConfigTemp.activeDuty = g_I2CInData[8];
+        g_ledConfigTemp.activeONtime = g_I2CInData[9];
+        g_ledConfigTemp.activeOFFtime = g_I2CInData[10];
+        g_ledConfigTemp.transmitDuty = g_I2CInData[11];
+        g_ledConfigTemp.transmitONtime = g_I2CInData[12];
+        g_ledConfigTemp.transmitOFFtime = g_I2CInData[13];
+        led_setLedConfig(&g_ledConfigTemp);
+        // Update I2C Buffers
+        g_I2COutData[8] = g_I2CInData[8];
+        g_I2COutData[9] = g_I2CInData[9];
+        g_I2COutData[10] = g_I2CInData[10];
+        g_I2COutData[11] = g_I2CInData[11];
+        g_I2COutData[12] = g_I2CInData[12];
+        g_I2COutData[13] = g_I2CInData[13];
+        // Clear update
+        g_isI2CInDataUpdated[8] = 0;
+        g_isI2CInDataUpdated[9] = 0;
+        g_isI2CInDataUpdated[10] = 0;
+        g_isI2CInDataUpdated[11] = 0;
+        g_isI2CInDataUpdated[12] = 0;
+        g_isI2CInDataUpdated[13] = 0;
+    }
+    //-----------------------------
+    // UPDATE DATA WRITTEN BY HOST
+    // - HOST DATA: Check data with EEPROM update
+    //-----------------------------
+    if(g_isI2CInDataUpdated[1])
+    {
+        g_rPiWDTEnable = g_I2CInData[0];
+        // Save to EEPROM the new value
+        // TODO
+        // After EEPROM Save: Clear update
+    }
+    if(g_isI2CInDataUpdated[4] || g_isI2CInDataUpdated[5])
+    {
+        g_resetTimerLimit = (uint16_t)(g_I2CInData[3] << 8);
+        g_resetTimerLimit += g_I2CInData[2];
+        // Save to EEPROM the new value
+        // TODO
+        // After EEPROM Save: Clear update        
+    }
+    if(g_isI2CInDataUpdated[4] || g_isI2CInDataUpdated[5])
+    {
+        g_resetTimerLimit = (uint16_t)(g_I2CInData[3] << 8);
+        g_resetTimerLimit += g_I2CInData[2];
+        // Save to EEPROM the new value
+        // TODO
+        // After EEPROM Save: Clear update       
+    }
+    if(g_isI2CInDataUpdated[6] || g_isI2CInDataUpdated[7])
+    {
+        g_resetCounter = (uint16_t)(g_I2CInData[7] << 8);
+        g_resetCounter += g_I2CInData[6];
+        // Save to EEPROM the new value
+        // TODO
+        // After EEPROM Save: Clear update       
+    } 
 }
 
 // main function
@@ -210,6 +305,7 @@ int main(void)
             __builtin_avr_wdr();
             // periodic functions
             adc_periodic();
+            g_ADCReading = adc_getADCReading();
             led_periodic();
             // Check if I2c Host updated data
             initI2CSyncData();

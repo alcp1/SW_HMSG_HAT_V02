@@ -224,7 +224,7 @@ void led_getLedConfig(ledConfig* config)
 }
 
 /* Request LED Transition signaling */
-void led_requestTrasnmitSignaling(void)
+void led_requestTransmitSignaling(void)
 {
     g_transmitRequested = true;    
 }

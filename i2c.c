@@ -9,6 +9,7 @@
 
 #include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/twi0.h"
 #include "i2c.h"
+#include "led.h"
 
 //----------------------------------------------------------------------------//
 // INTERNAL DEFINITIONS
@@ -106,6 +107,8 @@ static bool Client_Application(i2c_client_transfer_event_t event)
         case I2C_CLIENT_TRANSFER_EVENT_STOP_BIT_RECEIVED:
             // Go to first address after the last address
             g_I2CRegAddr = 0;
+            // Signal transmision
+            led_requestTransmitSignaling();
             break;
 
         //----------------------------
