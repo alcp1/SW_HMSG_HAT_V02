@@ -3,12 +3,12 @@
 //----------------------------------------------------------------------------//
 //  REVISION |    DATE     |                               |      AUTHOR      //
 //----------------------------------------------------------------------------//
-//  1.00     | 15/Mai/2026 |                               | ALCP             //
+//  1.00     | 17/Mai/2026 |                               | ALCP             //
 // - First version                                                            //
 //----------------------------------------------------------------------------//
 
-#ifndef LED_H
-#define LED_H
+#ifndef I2C_H
+#define I2C_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,65 +17,28 @@ extern "C" {
 //----------------------------------------------------------------------------//
 // EXTERNAL TYPES
 //----------------------------------------------------------------------------//
-// HAPCAN frame
-typedef struct  
-{
-    unsigned char activeDuty;
-    unsigned char activeONtime;
-    unsigned char activeOFFtime;
-    unsigned char transmitDuty;
-    unsigned char transmitONtime;
-    unsigned char transmitOFFtime;
-} ledConfig;
+#define I2C_REG_ADDR_SIZE   20
 
+//----------------------------------------------------------------------------//
+// EXTERNAL VARIABLES
+//----------------------------------------------------------------------------//
+extern volatile unsigned char g_I2CData[I2C_REG_ADDR_SIZE];
 
 //----------------------------------------------------------------------------//
 // EXTERNAL FUNCTIONS
 //----------------------------------------------------------------------------//
 /**
- * LED Initialization.
+ * Init I2C.
  * 
  * \param   nothing
  * \return  nothing
  */
-extern void led_init(void);
-
-/**
- * Periodic function.
- * 
- * \param   nothing
- * \return  nothing
- */
-extern void led_periodic(void);
-
-/**
- * Set LED Config.
- * 
- * \param   config LED configuration
- * \return  nothing
- */
-extern void led_setLedConfig(ledConfig* config);
-
-/**
- * Get LED Config.
- * 
- * \param   config LED configuration
- * \return  nothing
- */
-extern void led_getLedConfig(ledConfig* config);
-
-/**
- * Request LED Transition signaling.
- * 
- * \param   nothing
- * \return  nothing
- */
-extern void led_requestTrasnmitSignaling(void);
+extern void i2c_init(void);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LED_H */
+#endif /* I2C_H */
 
