@@ -14,18 +14,19 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 //----------------------------------------------------------------------------//
 // EXTERNAL TYPES
 //----------------------------------------------------------------------------//
 // HAPCAN frame
 typedef struct  
 {
-    unsigned char activeDuty;
-    unsigned char activeONtime;
-    unsigned char activeOFFtime;
-    unsigned char transmitDuty;
-    unsigned char transmitONtime;
-    unsigned char transmitOFFtime;
+    uint8_t activeDuty;
+    uint8_t activeONtime;
+    uint8_t activeOFFtime;
+    uint8_t transmitDuty;
+    uint8_t transmitONtime;
+    uint8_t transmitOFFtime;
 } ledConfig;
 
 

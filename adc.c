@@ -29,9 +29,9 @@
 //----------------------------------------------------------------------------//
 // INTERNAL GLOBAL VARIABLES
 //----------------------------------------------------------------------------//
-static volatile signed int g_LastTemperature;
-static volatile signed int g_Temperature;
-static volatile signed int g_ADCReading;
+static volatile int16_t g_LastTemperature;
+static volatile int16_t g_Temperature;
+static volatile int16_t g_ADCReading;
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
@@ -58,13 +58,13 @@ void adc_periodic(void)
 }
 
 /* Returns latest ADC reading */
-signed int adc_getADCReading(void)
+int16_t adc_getADCReading(void)
 {
     return g_ADCReading;
 }
 
 /* Returns current temperature in Celsius */
-signed int adc_getTemperature(void)
+int16_t adc_getTemperature(void)
 {
     //-------------------------------------------
     // See datasheet - Temperature Measurement

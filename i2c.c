@@ -23,10 +23,12 @@
 //----------------------------------------------------------------------------//
 // I2C - INTERNAL
 static volatile bool g_I2CWaitingRegAddr;
-static volatile unsigned char g_I2CRegAddr;
+static volatile uint8_t g_I2CRegAddr;
 static volatile i2c_client_error_t g_errorState;
 // I2C - EXTERNAL
-volatile unsigned char g_I2CData[I2C_REG_ADDR_SIZE];
+volatile uint8_t g_I2CInData[I2C_REG_ADDR_SIZE];
+volatile uint8_t g_I2COutData[I2C_REG_ADDR_SIZE];
+volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
@@ -74,21 +76,22 @@ static bool Client_Application(i2c_client_transfer_event_t event)
             else
             {
                 // Register address already sent - write data to buffer
-                g_I2CData[g_I2CRegAddr] = I2C0_Client.ReadByte();
+                g_I2CInData[g_I2CRegAddr] = I2C0_Client.ReadByte();
+                g_isI2CInDataUpdated[g_I2CRegAddr] = true;
                 g_I2CRegAddr++;
                 if(g_I2CRegAddr >= I2C_REG_ADDR_SIZE)
                 {
                     // Go to first address after the last address
                     g_I2CRegAddr = 0;
                 }
-            }            
+            }
             break;
 
         //----------------------------
         // I2C client can respond to data read request from I2C Host
         //----------------------------
         case I2C_CLIENT_TRANSFER_EVENT_TX_READY:
-            I2C0_Client.WriteByte(g_I2CData[g_I2CRegAddr]);
+            I2C0_Client.WriteByte(g_I2COutData[g_I2CRegAddr]);
             g_I2CRegAddr++;
             if(g_I2CRegAddr >= I2C_REG_ADDR_SIZE)
             {

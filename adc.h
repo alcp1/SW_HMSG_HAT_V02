@@ -14,6 +14,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 //----------------------------------------------------------------------------//
 // EXTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
@@ -43,7 +44,7 @@ extern void adc_periodic(void);
  * \param   nothing
  * \return  ADC Convertion result
  */
-extern signed int adc_getADCReading(void);
+extern int16_t adc_getADCReading(void);
 
 /**
  * Returns current temperature.
@@ -51,7 +52,7 @@ extern signed int adc_getADCReading(void);
  * \param   nothing
  * \return  temperature in Celsius
  */
-extern signed int adc_getTemperature(void);
+extern int16_t adc_getTemperature(void);
 
 #ifdef __cplusplus
 }

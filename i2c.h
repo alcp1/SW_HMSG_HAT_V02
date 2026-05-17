@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+#include <stdbool.h>
 //----------------------------------------------------------------------------//
 // EXTERNAL TYPES
 //----------------------------------------------------------------------------//
@@ -22,7 +24,9 @@ extern "C" {
 //----------------------------------------------------------------------------//
 // EXTERNAL VARIABLES
 //----------------------------------------------------------------------------//
-extern volatile unsigned char g_I2CData[I2C_REG_ADDR_SIZE];
+extern volatile uint8_t g_I2CInData[I2C_REG_ADDR_SIZE];
+extern volatile uint8_t g_I2COutData[I2C_REG_ADDR_SIZE];
+extern volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
 
 //----------------------------------------------------------------------------//
 // EXTERNAL FUNCTIONS

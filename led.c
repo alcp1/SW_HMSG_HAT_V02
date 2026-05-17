@@ -34,7 +34,6 @@ enum
     LED_STATE_ACTIVE
 };
 
-
 //----------------------------------------------------------------------------//
 // INTERNAL TYPES
 //----------------------------------------------------------------------------//
@@ -43,20 +42,20 @@ enum
 // INTERNAL GLOBAL VARIABLES
 //----------------------------------------------------------------------------//
 static volatile ledConfig g_ledConfig;
-static volatile unsigned char g_state;
-static volatile unsigned char g_activeTotalTime;
-static volatile unsigned char g_configActiveDuty;
-static volatile unsigned char g_configActiveOnTime;
-static volatile unsigned char g_configActiveOffTime;
-static volatile unsigned char g_configActiveTotalTime;
+static volatile uint8_t g_state;
+static volatile uint8_t g_activeTotalTime;
+static volatile uint8_t g_configActiveDuty;
+static volatile uint8_t g_configActiveOnTime;
+static volatile uint8_t g_configActiveOffTime;
+static volatile uint8_t g_configActiveTotalTime;
 static volatile bool g_transmitRequested;
-static volatile unsigned char g_transmitTotalTime;
-static volatile unsigned char g_configTransmitDuty;
-static volatile unsigned char g_configTransmitOnTime;
-static volatile unsigned char g_configTransmitOffTime;
-static volatile unsigned char g_configTransmitTotalTime;
-static volatile unsigned char g_duty8;   // 0 = 0%, 255 = 100%
-static volatile unsigned int  g_duty16;
+static volatile uint8_t g_transmitTotalTime;
+static volatile uint8_t g_configTransmitDuty;
+static volatile uint8_t g_configTransmitOnTime;
+static volatile uint8_t g_configTransmitOffTime;
+static volatile uint8_t g_configTransmitTotalTime;
+static volatile uint8_t g_duty8;   // 0 = 0%, 255 = 100%
+static volatile uint16_t g_duty16;
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
@@ -185,7 +184,7 @@ void led_periodic(void)
             break;
     }
     // Update LED output with Duty cycle
-    g_duty16 = (unsigned int)(g_duty8);
+    g_duty16 = (uint16_t)(g_duty8);
     // Set Duty Cycle for LED output
     TCA0_Compare0BufferSet(g_duty16);
 }
