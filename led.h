@@ -55,7 +55,7 @@ extern void led_periodic(void);
  * \param   config LED configuration
  * \return  nothing
  */
-extern void led_setLedConfig(ledConfig* config);
+extern void led_setLedConfig(volatile ledConfig* config);
 
 /**
  * Get LED Config.
@@ -63,7 +63,7 @@ extern void led_setLedConfig(ledConfig* config);
  * \param   config LED configuration
  * \return  nothing
  */
-extern void led_getLedConfig(ledConfig* config);
+extern void led_getLedConfig(volatile ledConfig* config);
 
 /**
  * Request LED Transition signaling.

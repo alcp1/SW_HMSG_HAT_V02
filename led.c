@@ -190,7 +190,7 @@ void led_periodic(void)
 }
 
 /* Set LED Config */
-void led_setLedConfig(ledConfig* config)
+void led_setLedConfig(volatile ledConfig* config)
 {
     // Copy data
     g_ledConfig.activeDuty = config->activeDuty;
@@ -212,7 +212,7 @@ void led_setLedConfig(ledConfig* config)
 }
 
 /* Get LED Config */
-void led_getLedConfig(ledConfig* config)
+void led_getLedConfig(volatile ledConfig* config)
 {
     // Copy data
     config->activeDuty = g_ledConfig.activeDuty;
