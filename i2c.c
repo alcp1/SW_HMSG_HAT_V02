@@ -9,7 +9,6 @@
 
 #include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/twi0.h"
 #include "i2c.h"
-#include "led.h"
 
 //----------------------------------------------------------------------------//
 // INTERNAL DEFINITIONS
@@ -27,8 +26,8 @@ static volatile bool g_I2CWaitingRegAddr;
 static volatile uint8_t g_I2CRegAddr;
 static volatile i2c_client_error_t g_errorState;
 // I2C - EXTERNAL
-volatile uint8_t g_I2CInData[I2C_REG_ADDR_SIZE];
-volatile uint8_t g_I2COutData[I2C_REG_ADDR_SIZE];
+volatile i2cRegisters g_I2CInData;
+volatile i2cRegisters g_I2COutData;
 volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
 
 //----------------------------------------------------------------------------//
@@ -77,7 +76,7 @@ static bool Client_Application(i2c_client_transfer_event_t event)
             else
             {
                 // Register address already sent - write data to buffer
-                g_I2CInData[g_I2CRegAddr] = I2C0_Client.ReadByte();
+                g_I2CInData.bytes[g_I2CRegAddr] = I2C0_Client.ReadByte();
                 g_isI2CInDataUpdated[g_I2CRegAddr] = true;
                 g_I2CRegAddr++;
                 if(g_I2CRegAddr >= I2C_REG_ADDR_SIZE)
@@ -92,7 +91,7 @@ static bool Client_Application(i2c_client_transfer_event_t event)
         // I2C client can respond to data read request from I2C Host
         //----------------------------
         case I2C_CLIENT_TRANSFER_EVENT_TX_READY:
-            I2C0_Client.WriteByte(g_I2COutData[g_I2CRegAddr]);
+            I2C0_Client.WriteByte(g_I2COutData.bytes[g_I2CRegAddr]);
             g_I2CRegAddr++;
             if(g_I2CRegAddr >= I2C_REG_ADDR_SIZE)
             {

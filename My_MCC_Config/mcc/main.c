@@ -47,16 +47,10 @@
 static volatile uint8_t g_mainCounter;
 static volatile uint8_t g_secondsCounter;
 // Control and I2C variables
-static volatile uint8_t g_rPiCommand;
-static volatile uint8_t g_rPiWDTEnable;
-static volatile uint16_t g_resetTimer;
-static volatile uint16_t g_resetTimerLimit;
-static volatile uint8_t g_resetCause;
-static volatile uint16_t g_resetCounter;
-static volatile int16_t g_ADCReading;
-static volatile int8_t g_sigrow_offset;
-static volatile uint8_t g_sigrow_gain;
-static volatile ledConfig g_ledConfigTemp;
+static i2cRegisters g_locI2CData;
+static i2cRegisters g_tempI2CData;
+static bool g_locIsI2CUpdated[I2C_REG_ADDR_SIZE];
+static bool g_tempIsI2CUpdated[I2C_REG_ADDR_SIZE];
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
@@ -72,42 +66,50 @@ void initI2CVariables(void)
     //-----------------------------
     //   - Init Control variables
     //-----------------------------
-    // Pi Command: No Command
-    g_rPiCommand = 0;
+    // --> FIELD: Pi Command: No Command
+    g_locI2CData.fields.rPiCommand = 0;
     //-----------------------------
     //   - EEPROM READ
     //-----------------------------
-    // Raspbery Pi Watchdog enable - Check EEPROM
-    g_rPiWDTEnable = EEPROM_Read(EEPROM_WDT_ADDR);
-    // Reset Timer: 0 (init)
-    g_resetTimer = 0;
-    //Reset Timer Limit - Check EEPROM and boundary check it
-    g_resetTimerLimit = (uint16_t)EEPROM_Read(
-        EEPROM_RESET_TIMER_LIMIT_ADDR + 1);
-    g_resetTimerLimit = g_resetTimerLimit << 8;
-    g_resetTimerLimit += (uint16_t)EEPROM_Read(
+    // --> FIELD: Raspbery Pi Watchdog enable - Check EEPROM
+    g_locI2CData.fields.rPiWDTEnable = EEPROM_Read(EEPROM_WDT_ADDR);
+    // --> FIELD: Reset Timer: 0 (init)
+    g_locI2CData.fields.resetTimer = 0;
+    // --> FIELD: Reset Timer Limit - Check EEPROM and boundary check it
+    g_locI2CData.bytes[4] = (uint16_t)EEPROM_Read(
         EEPROM_RESET_TIMER_LIMIT_ADDR);
-    if(g_resetTimerLimit < RPI_MIN_RESET_COUNT)
+    g_locI2CData.bytes[5] = (uint16_t)EEPROM_Read(
+        EEPROM_RESET_TIMER_LIMIT_ADDR + 1);
+    if(g_locI2CData.fields.resetTimerLimit < RPI_MIN_RESET_COUNT)
     {
-        g_resetTimerLimit = RPI_MIN_RESET_COUNT;
+        g_locI2CData.fields.resetTimerLimit = RPI_MIN_RESET_COUNT;
     }
-    g_resetCounter = (uint16_t)EEPROM_Read(EEPROM_RESET_COUNTER_ADDR);
+    // --> FIELD: Reset Counter
+    g_locI2CData.fields.resetCounter = (uint16_t)EEPROM_Read(
+        EEPROM_RESET_COUNTER_ADDR);
+    //-----------------------------
+    //   - LED
+    //-----------------------------    
+    // --> FIELD: LED Config
+    led_getLedConfig(&g_locI2CData.fields.ledConfig);
     //-----------------------------
     //   - RESET CAUSE
     //-----------------------------
+    // --> FIELD: Reset Cause
     // Get reset cause and clear it after reading
-    g_resetCause = RSTCTRL_get_reset_cause();
+    g_locI2CData.fields.resetCause = RSTCTRL_get_reset_cause();
     RSTCTRL_clear_reset_cause();
+    //-----------------------------
+    //   - ADC
+    //-----------------------------
+    g_locI2CData.fields.adcReading = 0;
     //-----------------------------
     //   - CALIBRATION
     //-----------------------------
-    // Calibration values for temperature
-    g_sigrow_offset = SIGROW.TEMPSENSE1;
-    g_sigrow_gain = SIGROW.TEMPSENSE0; 
-    //-----------------------------
-    //   - LED
-    //-----------------------------
-    led_getLedConfig(&g_ledConfigTemp);
+    // --> FIELD: SIGROW OFFSET
+    g_locI2CData.fields.sigrow_offset = SIGROW.TEMPSENSE1;
+    // --> FIELD: SIGROW GAIN
+    g_locI2CData.fields.sigrow_gain = SIGROW.TEMPSENSE0;     
 }
 
 void initI2CInBuffer(void)
@@ -116,16 +118,12 @@ void initI2CInBuffer(void)
     //-----------------------------
     // Set IN buffer
     //-----------------------------
-    g_I2CInData[0] = g_rPiCommand;
-    g_I2CInData[1] = g_rPiWDTEnable;
-    memcpy((void*)&(g_I2CInData[2]), (const void*)&(g_resetTimer), 2);
-    memcpy((void*)&(g_I2CInData[4]), (const void*)&(g_resetTimerLimit), 2);
-    memcpy((void*)&(g_I2CInData[6]), (const void*)&(g_resetCounter), 2);
-    memcpy((void*)&(g_I2CInData[8]), (const void*)&(g_ledConfigTemp), 6);
-    // Remaining bytes are not applicable to in buffer - set with index
+    memcpy((void*)&(g_I2CInData), (const void*)&(g_locI2CData), 
+        I2C_REG_ADDR_SIZE);
+    // Last bytes are not applicable to "in buffer" - set with index
     for(index = 14; index < I2C_REG_ADDR_SIZE; index++)
     {
-        g_I2CInData[index] = index;
+        g_I2CInData.bytes[index] = index;
     }
     //-----------------------------
     // Set IN buffer Host Update Request
@@ -142,82 +140,103 @@ void initI2COutBuffer(void)
     // Set OUT buffer
     //-----------------------------
     // - Data written by Raspberry Pi and ATTiny: copy from IN Buffer
-    memcpy((void*)&(g_I2COutData[0]), (const void*)&(g_I2CInData[0]), 14);
-    // - Data to be updated by ATTiny periodically / on power up
-    g_I2COutData[14] = g_resetCause; // power up only
-    g_I2COutData[15] = 0; // ADC Reading - periodic update
-    g_I2COutData[16] = 0; // ADC Reading - periodic update
-    g_I2COutData[17] = (uint8_t)(g_sigrow_offset); // power up only
-    g_I2COutData[18] = g_sigrow_gain; // power up only    
+    memcpy((void*)&(g_I2COutData), (const void*)&(g_locI2CData), 
+        I2C_REG_ADDR_SIZE);
 }
 
 void initI2CSyncData(void)
 {    
+    uint8_t index;
+    // Init local "Is Updated" flags
+    memset((void*)&(g_locIsI2CUpdated[0]), false, I2C_REG_ADDR_SIZE);
+    // Enter Interrupt protected zone to prevent update simultaneously with 
+    // interrupts
+    DISABLE_INTERRUPTS();
+    memcpy((void*)&(g_tempI2CData), (const void*)&(g_I2CInData), 
+        I2C_REG_ADDR_SIZE);
+    memcpy((void*)&(g_tempIsI2CUpdated), (const void*)&(g_isI2CInDataUpdated), 
+        I2C_REG_ADDR_SIZE);
+    // Leave protected zone
+    ENABLE_INTERRUPTS();
     //-----------------------------
     // UPDATE DATA WRITTEN BY CLIENT
     //-----------------------------
-    memcpy((void*)&(g_I2COutData[2]), (const void*)&(g_resetTimer), 2);
-    memcpy((void*)&(g_I2COutData[15]), (const void*)&(g_ADCReading), 2);
+
     //-----------------------------
     // UPDATE DATA WRITTEN BY HOST
     // - HOST DATA: Check data with immediate update
     //-----------------------------
-    if(g_isI2CInDataUpdated[0])
+    if(g_tempIsI2CUpdated[0])
     {
-        // Update internal data
-        g_rPiCommand = g_I2CInData[0];
-        // Update I2C Buffers
-        g_I2COutData[0] = g_I2CInData[0];
-        // Clear update
-        g_isI2CInDataUpdated[0] = false;
+        // Update internal data with temporary data
+        g_locI2CData.fields.rPiCommand = g_tempI2CData.fields.rPiCommand;
+        // Set as clear on the local copy
+        g_locIsI2CUpdated[0] = true;
     }
-    if(g_isI2CInDataUpdated[2] || g_isI2CInDataUpdated[3])
+    if(g_tempIsI2CUpdated[2] || g_tempIsI2CUpdated[3])
     {
-        // Update internal data
-        memcpy((void*)&(g_resetTimer), (const void*)&(g_I2CInData[2]), 2);
-        // Update I2C Buffers
-        memcpy((void*)&(g_I2COutData[2]), (const void*)&(g_I2CInData[2]), 2);
-        // Clear update
-        g_isI2CInDataUpdated[2] = false;
-        g_isI2CInDataUpdated[3] = false;
+        // Update internal data with temporary data
+        g_locI2CData.fields.resetTimer = g_tempI2CData.fields.resetTimer;
+        // Set as clear on the local copy
+        g_locIsI2CUpdated[2] = true;
+        g_locIsI2CUpdated[3] = true;
     }
-    if(g_isI2CInDataUpdated[8] || g_isI2CInDataUpdated[9] || 
-        g_isI2CInDataUpdated[10] || g_isI2CInDataUpdated[11] ||
+    if( g_tempIsI2CUpdated[8] || g_tempIsI2CUpdated[9] || 
+        g_tempIsI2CUpdated[10] || g_isI2CInDataUpdated[11] ||
         g_isI2CInDataUpdated[12] || g_isI2CInDataUpdated[13])
     {
         // Update internal data
-        memcpy((void*)&(g_ledConfigTemp), (const void*)&(g_I2CInData[8]), 6);        
-        led_setLedConfig(&g_ledConfigTemp);
-        // Update I2C Buffers
-        memcpy((void*)&(g_I2COutData[8]), (const void*)&(g_I2CInData[8]), 6);
-        // Clear update
-        memset((void*)&(g_isI2CInDataUpdated[8]), false, 6);
+        memcpy((void*)&(g_locI2CData.fields.ledConfig), 
+            (const void*)&(g_tempI2CData.fields.ledConfig), sizeof(ledConfig));        
+        led_setLedConfig(&(g_locI2CData.fields.ledConfig));
+        // Set as clear on the local copy
+        memset((void*)&(g_locIsI2CUpdated[8]), true, sizeof(ledConfig));
     }
     //-----------------------------
     // UPDATE DATA WRITTEN BY HOST
     // - HOST DATA: Check data with EEPROM update
     //-----------------------------
-    if(g_isI2CInDataUpdated[1])
+    if(g_tempIsI2CUpdated[1])
     {
-        g_rPiWDTEnable = g_I2CInData[0];
+        g_locI2CData.fields.rPiWDTEnable = 
+            g_tempI2CData.fields.rPiWDTEnable;
         // Save to EEPROM the new value
         // TODO
-        // After EEPROM Save: Clear update
+        // After EEPROM Save: Set as clear on the local copy
     }
-    if(g_isI2CInDataUpdated[4] || g_isI2CInDataUpdated[5])
+    if(g_tempIsI2CUpdated[4] || g_tempIsI2CUpdated[5])
     {
-        memcpy((void*)&(g_resetTimerLimit), (const void*)&(g_I2CInData[4]), 2);
+        g_locI2CData.fields.resetTimerLimit = 
+            g_tempI2CData.fields.resetTimerLimit;
         // Save to EEPROM the new value
         // TODO
-        // After EEPROM Save: Clear update        
+        // After EEPROM Save: Set as clear on the local copy       
     }
-    if(g_isI2CInDataUpdated[6] || g_isI2CInDataUpdated[7])
+    if(g_tempIsI2CUpdated[6] || g_tempIsI2CUpdated[7])
     {
-        memcpy((void*)&(g_resetCounter), (const void*)&(g_I2CInData[6]), 2);
+        g_locI2CData.fields.resetCounter = 
+            g_tempI2CData.fields.resetCounter;
         // Save to EEPROM the new value
         // TODO
-        // After EEPROM Save: Clear update       
+        // After EEPROM Save: Set as clear on the local copy       
     }
+    // Enter Interrupt protected zone to prevent update simultaneously with 
+    // interrupts
+    DISABLE_INTERRUPTS();
+    // Copy from local I2C data to the "Out" buffer
+    memcpy((void*)&(g_I2COutData), (const void*)&(g_locI2CData), 
+        I2C_REG_ADDR_SIZE);
+    // Update "Is Updated" buffer
+    for(index = 0; index < I2C_REG_ADDR_SIZE; index++)
+    {
+        if(g_locIsI2CUpdated[index])
+        {
+            // Field was updated
+            g_isI2CInDataUpdated[index] = false;
+        }
+    }
+    // Leave protected zone
+    ENABLE_INTERRUPTS();
 }
 
 // main function
@@ -254,7 +273,7 @@ int main(void)
             __builtin_avr_wdr();
             // periodic functions
             adc_periodic();
-            g_ADCReading = adc_getADCReading();
+            g_locI2CData.fields.adcReading = adc_getADCReading();
             led_periodic();
             // Check if I2c Host updated data
             initI2CSyncData();
