@@ -21,7 +21,7 @@ extern "C" {
 //----------------------------------------------------------------------------//
 // EXTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
-#define I2C_REG_ADDR_SIZE   19
+#define I2C_REG_ADDR_SIZE   21
 
 //----------------------------------------------------------------------------//
 // EXTERNAL TYPES
@@ -43,6 +43,7 @@ typedef union
         int16_t adcReading;         // byte index 15 and 16
         int8_t sigrow_offset;       // byte index 17
         uint8_t sigrow_gain;        // byte index 18
+        uint16_t version;           // byte index 19 and 20
     } fields;
 } i2cRegisters;
 

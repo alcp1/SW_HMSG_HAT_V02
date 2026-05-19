@@ -262,7 +262,7 @@ The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more 
 ### I2C Registers
 |Register Address|Name|Read/Write|Description|
 |----------------|----|----------|-----------|
-|**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x11**: Reboot ATTiny <br> • **0x12**: Cycle Power in 20 seconds<br> • **Other values**: Ignored|
+|**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x01**: Reset the _Reset Timer_<br> • **0x11**: Reboot ATTiny <br> • **0x21**: Cycle Power in 20 seconds<br> • **Other values**: Ignored|
 |**0x01**| Raspberry Pi Watchdog Enable | Written by **Host** only. | If set to **0x63**, ATTiny will update the _Reset Timer_ (see register address 0x02 and 0x03) every second, and if it reaches the _Reset Timer Limit_ (see register address 0x03 and 0x04), the ATtiny will cycle the power.|
 |**0x02**<br>**0x03**| Reset Timer | Written by **Host** and **Client**. | _Reset Timer_ is a 16 bit counter updated every second. Register Address **0x02** contains the LSB, and Register Address **0x03** contains the MSB.|
 |**0x04**<br>**0x05**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value chacked against _Reset Timer_. Register Address **0x04** contains the LSB, and Register Address **0x05** contains the MSB.|
@@ -272,6 +272,7 @@ The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more 
 |**0x0E**| ATTiny Reset Cause | Written by **Client** only. | See the Register **RSTFR** in the ATTiny402 datasheet.|
 |**0x0F**<br>**0x10**| ATTiny ADC Reading (Temperature) | Written by **Client** only. | Latest ADC Reading for the ATTiny temperature. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register Address **0x0F** contains the LSB, and Register Address **0x10** contains the MSB.|
 |**0x11**<br>**0x12**| ATTiny Sigrow Offset / Gain | Written by **Client** only. | Device calibration for the ATTiny temperature measuremntes. Updated only at reset, as it is fexed for each ATTiny device. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register **0x11**: Sigrow Offset. <br>• Register **0x12**: Sigrow Gain.|
+|**0x13**<br>**0x14**| SW Version | Written by **Client** only. | SW version as a 16 bit unsigned integer. Register Address **0x13** contains the LSB, and Register Address **0x14** contains the MSB.|
 
 ## LED
 - After reset, the LED will linearly increase the duty cycle from 0% to 100% (init mode).
