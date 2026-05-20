@@ -17,11 +17,24 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "led.h"
+#include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/i2c_client_types.h"
 
 //----------------------------------------------------------------------------//
 // EXTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
-#define I2C_REG_ADDR_SIZE   21
+#define I2C_REG_ADDR_SIZE   22
+#define I2C_REG_RPICOM      0   // rPiCommand
+#define I2C_REG_RPIAUX      1   // rPiCommandAux
+#define I2C_REG_WDTEN       2   // rPiWDTEnable
+#define I2C_REG_TIM         3   // resetTimer
+#define I2C_REG_TIML        5   // resetTimerLimit
+#define I2C_REG_RCNT        7   // resetCounter
+#define I2C_REG_LEDC        9   // ledConfig
+#define I2C_REG_RSTC        15  // resetCause
+#define I2C_REG_ADCR        16  // adcReading
+#define I2C_REG_SOFF        18  // sigrow_offset
+#define I2C_REG_SGAI        19  // sigrow_gain
+#define I2C_REG_VER         20  // version
 
 //----------------------------------------------------------------------------//
 // EXTERNAL TYPES
@@ -34,16 +47,17 @@ typedef union
     struct 
     {
         uint8_t rPiCommand;         // byte index 0
-        uint8_t rPiWDTEnable;       // byte index 1
-        uint16_t resetTimer;        // byte index 2 and 3
-        uint16_t resetTimerLimit;   // byte index 4 and 5
-        uint16_t resetCounter;      // byte index 6 and 7
-        ledConfig ledConfig;        // byte index 8 to 13
-        uint8_t resetCause;         // byte index 14
-        int16_t adcReading;         // byte index 15 and 16
-        int8_t sigrow_offset;       // byte index 17
-        uint8_t sigrow_gain;        // byte index 18
-        uint16_t version;           // byte index 19 and 20
+        uint8_t rPiCommandAux;      // byte index 1
+        uint8_t rPiWDTEnable;       // byte index 2
+        uint16_t resetTimer;        // byte index 3 and 4
+        uint16_t resetTimerLimit;   // byte index 5 and 6
+        uint16_t resetCounter;      // byte index 7 and 8
+        ledConfig ledConfig;        // byte index 9 to 14
+        uint8_t resetCause;         // byte index 15
+        int16_t adcReading;         // byte index 16 and 17
+        int8_t sigrow_offset;       // byte index 18
+        uint8_t sigrow_gain;        // byte index 19
+        uint16_t version;           // byte index 20 and 21
     } fields;
 } i2cRegisters;
 
@@ -53,6 +67,7 @@ typedef union
 extern volatile i2cRegisters g_I2CInData;
 extern volatile i2cRegisters g_I2COutData;
 extern volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
+extern volatile i2c_client_error_t g_errorState;
 
 //----------------------------------------------------------------------------//
 // EXTERNAL FUNCTIONS
@@ -65,6 +80,13 @@ extern volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
  */
 extern void i2c_init(void);
 
+/**
+ * Init I2C.
+ * 
+ * \param   nothing
+ * \return  nothing
+ */
+extern void i2c_init(void);
 
 #ifdef __cplusplus
 }

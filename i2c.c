@@ -7,8 +7,19 @@
 // - First version                                                            //
 //----------------------------------------------------------------------------//
 
-#include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/twi0.h"
 #include "i2c.h"
+#include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/twi0.h"
+
+// See: https://onlinedocs.microchip.com/oxy/GUID-420E6AAC-9141-47BF-A4C7-A6EA17246D0D-en-US-21/GUID-6E279462-9E94-410C-9A48-7D719FFBC0AF.html
+
+//----------------------------------------------------------------------------//
+// EXTERNAL GLOBAL VARIABLES
+//----------------------------------------------------------------------------//
+// I2C - EXTERNAL
+volatile i2cRegisters g_I2CInData;
+volatile i2cRegisters g_I2COutData;
+volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
+volatile i2c_client_error_t g_errorState;
 
 //----------------------------------------------------------------------------//
 // INTERNAL DEFINITIONS
@@ -24,11 +35,6 @@
 // I2C - INTERNAL
 static volatile bool g_I2CWaitingRegAddr;
 static volatile uint8_t g_I2CRegAddr;
-static volatile i2c_client_error_t g_errorState;
-// I2C - EXTERNAL
-volatile i2cRegisters g_I2CInData;
-volatile i2cRegisters g_I2COutData;
-volatile bool g_isI2CInDataUpdated[I2C_REG_ADDR_SIZE];
 
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
@@ -108,6 +114,8 @@ static bool Client_Application(i2c_client_transfer_event_t event)
             g_I2CRegAddr = 0;
             // Signal transmision
             led_requestTransmitSignaling();
+            // Clear Error
+            g_errorState = I2C_CLIENT_ERROR_NONE;
             break;
 
         //----------------------------
@@ -115,14 +123,6 @@ static bool Client_Application(i2c_client_transfer_event_t event)
         //----------------------------
         case I2C_CLIENT_TRANSFER_EVENT_ERROR:
             g_errorState = I2C0_Client.ErrorGet();
-            if(g_errorState == I2C_CLIENT_ERROR_BUS_ERROR)
-            {
-                // Bus Error Handling
-            }
-            else if(g_errorState == I2C_CLIENT_ERROR_COLLISION)
-            {
-                // Collision Error Handling
-            }
             break;
 
         default:
@@ -141,4 +141,6 @@ void i2c_init(void)
 {
     // Set I2C Client callback
     I2C0_Client.CallbackRegister(Client_Application);
+    // Init I2C
+    I2C0_Client.Initialize();
 }
