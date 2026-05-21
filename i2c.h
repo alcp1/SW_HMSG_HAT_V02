@@ -24,7 +24,7 @@ extern "C" {
 //----------------------------------------------------------------------------//
 #define I2C_REG_ADDR_SIZE   22
 #define I2C_REG_RPICOM      0   // rPiCommand
-#define I2C_REG_RPIAUX      1   // rPiCommandAux
+#define I2C_REG_RPIDLY      1   // rPiPCDelay
 #define I2C_REG_WDTEN       2   // rPiWDTEnable
 #define I2C_REG_TIM         3   // resetTimer
 #define I2C_REG_TIML        5   // resetTimerLimit
@@ -47,7 +47,7 @@ typedef union
     struct 
     {
         uint8_t rPiCommand;         // byte index 0
-        uint8_t rPiCommandAux;      // byte index 1
+        uint8_t rPiPCDelay;         // byte index 1
         uint8_t rPiWDTEnable;       // byte index 2
         uint16_t resetTimer;        // byte index 3 and 4
         uint16_t resetTimerLimit;   // byte index 5 and 6

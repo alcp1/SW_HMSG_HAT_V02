@@ -143,4 +143,6 @@ void i2c_init(void)
     I2C0_Client.CallbackRegister(Client_Application);
     // Init I2C
     I2C0_Client.Initialize();
+    // Clear Error
+    g_errorState = I2C_CLIENT_ERROR_NONE;
 }

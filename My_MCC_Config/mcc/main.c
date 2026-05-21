@@ -23,20 +23,17 @@
 #define VERSION                 0
 #define SECONDS_TICKS           (1000U/20)
 #define RPI_WDT_ENABLE_FLAG     0x63 // Arbitrary number
-#define RPI_MIN_RESET_TIML      300 // 5 minutes minimum for Reset Timer Limit
-#define DEFAULT_PWRC_TIMER      30 // 30 seconds for power cycle
-#define DEFAULT_I2C_ERR_TIMER   30 // 30 seconds for I2C error before SW reset
-#define DEFAULT_RST_ERR_TIMER   30 // 30 seconds for Reset Counter update
+#define DEFAULT_RESET_TIML      (5*60) // 5 minutes for Reset Timer Limit
+#define DEFAULT_PWRC_TIME       30 // 30 seconds for power cycle
+#define MAX_I2C_ERROR_TIME      25 // 25 seconds for I2C error before SW reset
+#define MAX_PC_EEP_UPDATE_TIME  10 // 10 seconds for Reset Counter update
 // EEPROM - OFFSETS
 #define EEPROM_WDT_OFFSET_ADDR                  0
-#define EEPROM_RESET_TIMER_LIMIT_OFFSET_ADDR    1
-#define EEPROM_RESET_COUNTER_OFFSET_ADDR        5
+#define EEPROM_RESET_COUNTER_OFFSET_ADDR        2
 // EEPROM - ADDRESSES
 #define EEPROM_BASE_ADDR    0x1400
 #define EEPROM_WDT_ADDR \
     (EEPROM_BASE_ADDR + EEPROM_WDT_OFFSET_ADDR)
-#define EEPROM_RESET_TIMER_LIMIT_ADDR \
-    (EEPROM_BASE_ADDR + EEPROM_RESET_TIMER_LIMIT_OFFSET_ADDR)
 #define EEPROM_RESET_COUNTER_ADDR \
     (EEPROM_BASE_ADDR + EEPROM_RESET_COUNTER_OFFSET_ADDR)
 
@@ -68,7 +65,7 @@ static bool g_tempIsI2CUpdated[I2C_REG_ADDR_SIZE];
 //----------------------------------
 static bool powerCycleRequested;
 static uint8_t powerCycleTimer;
-static uint8_t resetCounterUpdatedBytes;
+static uint8_t resetBytesToUpdate;
 //----------------------------------
 // I2C Error Control
 //----------------------------------
@@ -84,84 +81,57 @@ void Timer_Callback_20ms(void)
 }
 
 // Init I2C app buffer / variable
-void appInitI2CVars(void)
+void appI2CInit(void)
 {    
+    uint8_t index;
     //-----------------------------
+    // PART 1: Update I2C Data
+    //-----------------------------    
     // COMMAND
-    //-----------------------------
     // --> FIELD: Pi Command: No Command
     g_appI2CData.fields.rPiCommand = 0;
-    // --> FIELD: Pi Aux: Default Cycle Power Timer
-    g_appI2CData.fields.rPiCommandAux = DEFAULT_PWRC_TIMER;
-    //-----------------------------
-    // EEPROM FIELD
-    //-----------------------------
+    // --> FIELD: Pi Aux: Default Cycle Power Timer Delay
+    g_appI2CData.fields.rPiPCDelay = DEFAULT_PWRC_TIME;
+    // EEPROM WDT ENABLE
     // --> FIELD: Raspbery Pi Watchdog enable - Check EEPROM
     g_appI2CData.fields.rPiWDTEnable = EEPROM_Read(EEPROM_WDT_ADDR);
-    //-----------------------------
     // TIMER
-    //-----------------------------
     // --> FIELD: Reset Timer: 0 (init)
     g_appI2CData.fields.resetTimer = 0;
-    //-----------------------------
-    // EEPROM FIELD
-    //-----------------------------
-    // --> FIELD: Reset Timer Limit - Check EEPROM and boundary check it
-    g_appI2CData.bytes[I2C_REG_TIML] = (uint16_t)EEPROM_Read(
-        EEPROM_RESET_TIMER_LIMIT_ADDR);
-    g_appI2CData.bytes[I2C_REG_TIML + 1] = (uint16_t)EEPROM_Read(
-        EEPROM_RESET_TIMER_LIMIT_ADDR + 1);
-    if(g_appI2CData.fields.resetTimerLimit < RPI_MIN_RESET_TIML)
-    {
-        g_appI2CData.fields.resetTimerLimit = RPI_MIN_RESET_TIML;
-    }
-    //-----------------------------
-    // EEPROM FIELD
-    //-----------------------------
+    // RESET TIMER LIMIT
+    // --> FIELD: Reset Timer Limit
+    g_appI2CData.fields.resetTimerLimit = DEFAULT_RESET_TIML;
+    // EEPROM FIELD - Reset Counter
     // --> FIELD: Reset Counter
     g_appI2CData.bytes[I2C_REG_RCNT] = (uint16_t)EEPROM_Read(
         EEPROM_RESET_COUNTER_ADDR);
     g_appI2CData.bytes[I2C_REG_RCNT + 1] = (uint16_t)EEPROM_Read(
         EEPROM_RESET_COUNTER_ADDR + 1);
-    //-----------------------------
-    //   - LED
-    //-----------------------------    
+    // LED
     // --> FIELD: LED Config
     led_getLedConfig(&g_appI2CData.fields.ledConfig);
-    //-----------------------------
-    //   - RESET CAUSE
-    //-----------------------------
+    // RESET CAUSE
     // --> FIELD: Reset Cause
     // Get reset cause and clear it after reading
     g_appI2CData.fields.resetCause = RSTCTRL_get_reset_cause();
     RSTCTRL_clear_reset_cause();
-    //-----------------------------
-    //   - ADC
-    //-----------------------------
+    // ADC
     g_appI2CData.fields.adcReading = 0;
-    //-----------------------------
-    //   - CALIBRATION
-    //-----------------------------
+    // CALIBRATION
     // --> FIELD: SIGROW OFFSET
     g_appI2CData.fields.sigrow_offset = SIGROW.TEMPSENSE1;
     // --> FIELD: SIGROW GAIN
     g_appI2CData.fields.sigrow_gain = SIGROW.TEMPSENSE0;
-    //-----------------------------
-    //   - VERSION
+    // SW VERSION
     //-----------------------------  
     g_appI2CData.fields.version = VERSION;
-}
 
-// Init I2C IN buffer (written by the HOST, read by the CLIENT)
-void appInitI2CBufferIN(void)
-{
-    uint8_t index;
     //-----------------------------
-    // Set IN buffer
-    //-----------------------------
+    // PART 2: Update I2C IN Buffer
+    //----------------------------- 
     memcpy((void*)&(g_I2CInData), (const void*)&(g_appI2CData), 
         I2C_REG_ADDR_SIZE);
-    // Last bytes are not applicable to "in buffer" - set with index
+    // Last bytes are not applicable to "IN Buffer" - set with index
     for(index = 14; index < I2C_REG_ADDR_SIZE; index++)
     {
         g_I2CInData.bytes[index] = index;
@@ -173,14 +143,10 @@ void appInitI2CBufferIN(void)
     {
         g_isI2CInDataUpdated[index] = false;
     }
-}
 
-// Init I2C OUT buffer (written by the CLIENT, read by the HOST)
-void appInitI2CBufferOUT(void)
-{
     //-----------------------------
-    // Set OUT buffer
-    //-----------------------------
+    // PART 3: Update I2C OUT Buffer
+    //----------------------------- 
     // - Data written by Raspberry Pi and ATTiny: copy from IN Buffer
     memcpy((void*)&(g_I2COutData), (const void*)&(g_appI2CData), 
         I2C_REG_ADDR_SIZE);
@@ -213,13 +179,13 @@ void appSyncI2CData(void)
         // Set as clear on the local copy
         g_locIsI2CUpdated[I2C_REG_RPICOM] = true;
     }
-    // FIELD: rPiCommandAux
-    if(g_tempIsI2CUpdated[I2C_REG_RPIAUX])
+    // FIELD: rPiPCDelay
+    if(g_tempIsI2CUpdated[I2C_REG_RPIDLY])
     {
         // Update internal data with temporary data
-        g_appI2CData.fields.rPiCommandAux = g_tempI2CData.fields.rPiCommandAux;
+        g_appI2CData.fields.rPiPCDelay = g_tempI2CData.fields.rPiPCDelay;
         // Set as clear on the local copy
-        g_locIsI2CUpdated[I2C_REG_RPIAUX] = true;
+        g_locIsI2CUpdated[I2C_REG_RPIDLY] = true;
     }
     // FIELD: resetTimer
     if(g_tempIsI2CUpdated[I2C_REG_TIM] || g_tempIsI2CUpdated[I2C_REG_TIM + 1])
@@ -229,6 +195,16 @@ void appSyncI2CData(void)
         // Set as clear on the local copy
         g_locIsI2CUpdated[I2C_REG_TIM] = true;
         g_locIsI2CUpdated[I2C_REG_TIM + 1] = true;
+    }
+    // FIELD: resetTimerLimit
+    if(g_tempIsI2CUpdated[I2C_REG_TIML] || g_tempIsI2CUpdated[I2C_REG_TIML + 1])
+    {
+        // Update internal data with temporary data
+        g_appI2CData.fields.resetTimerLimit = 
+            g_tempI2CData.fields.resetTimerLimit;
+        // Set as clear on the local copy
+        g_locIsI2CUpdated[I2C_REG_TIML] = true;
+        g_locIsI2CUpdated[I2C_REG_TIML + 1] = true;
     }
     // FIELD: ledConfig
     if( g_tempIsI2CUpdated[I2C_REG_LEDC] || 
@@ -266,50 +242,6 @@ void appSyncI2CData(void)
                 g_tempI2CData.fields.rPiWDTEnable;
             // Set as clear on the local copy
             g_locIsI2CUpdated[I2C_REG_WDTEN] = true;
-        }
-    }
-    // FIELD: resetTimerLimit
-    // Has to be else if in order to process one EEPROM byte each function call
-    else if(g_tempIsI2CUpdated[I2C_REG_TIML])
-    {
-        g_appI2CData.bytes[I2C_REG_TIML] = g_tempI2CData.bytes[I2C_REG_TIML];
-        // Save to EEPROM the new value
-        eeprom_newWriteRequest(EEPROM_WDT_ADDR, 
-            g_tempI2CData.bytes[I2C_REG_TIML]);
-        // Check if EEPROM Finished
-        if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
-        {
-            // After EEPROM Save: Update internal data with temporary data
-            // REMARK: Only if both bytes of resetTimerLimit are updated
-            if(!g_tempIsI2CUpdated[I2C_REG_TIML + 1])
-            {
-                g_appI2CData.fields.resetTimerLimit = 
-                    g_tempI2CData.fields.resetTimerLimit;
-            }
-            // Set as clear on the local copy
-            g_locIsI2CUpdated[I2C_REG_TIML] = true;
-        }
-    }
-    // Has to be else if in order to process one EEPROM byte each function call
-    else if(g_tempIsI2CUpdated[I2C_REG_TIML + 1])
-    {
-        g_appI2CData.bytes[I2C_REG_TIML + 1] = 
-            g_tempI2CData.bytes[I2C_REG_TIML + 1];
-        // Save to EEPROM the new value
-        eeprom_newWriteRequest(EEPROM_WDT_ADDR, 
-            g_tempI2CData.bytes[I2C_REG_TIML + 1]);
-        // Check if EEPROM Finished
-        if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
-        {
-            // After EEPROM Save: Update internal data with temporary data
-            // REMARK: Only if both bytes of resetTimerLimit are updated
-            if(!g_tempIsI2CUpdated[I2C_REG_TIML])
-            {
-                g_appI2CData.fields.resetTimerLimit = 
-                    g_tempI2CData.fields.resetTimerLimit;
-            }
-            // Set as clear on the local copy
-            g_locIsI2CUpdated[I2C_REG_TIML + 1] = true;
         }
     }
     // FIELD: resetCounter
@@ -380,40 +312,28 @@ void appHandleI2CCommands(void)
     switch(g_appI2CData.fields.rPiCommand)
     {
         case 0x01:
+            // Clear command
+            g_appI2CData.fields.rPiCommand = 0;
             // Clear reset timer
             g_appI2CData.fields.resetTimer = 0;
-            g_appI2CData.fields.rPiCommand = 0;
             break;
         case 0x11:
             // Restart ATTiny402
             RSTCTRL_SoftwareReset();
-            // TO DO
             break;
         case 0x21:
-            // Cycle Power in POWER_CYCLE_DELAY seconds
+            // Clear command
             g_appI2CData.fields.rPiCommand = 0;
+            // Cycle Power in POWER_CYCLE_DELAY seconds
             powerCycleRequested = true;
-            powerCycleTimer = g_appI2CData.fields.rPiCommandAux;
-            // Do not update reset counter in EEPROM
-            resetCounterUpdatedBytes = 2;
-            // TO DO
+            powerCycleTimer = g_appI2CData.fields.rPiPCDelay;
+            // Do NOT update Reset Counter or WDT Enable in EEPROM
+            resetBytesToUpdate = 0;
             break;
         default:
             break;
     }
 }
-
-// App I2C Init
-void appI2CInit(void)
-{
-    // Init I2C app data
-    appInitI2CVars();
-    // Init I2C Buffer In
-    appInitI2CBufferIN();
-    // Init I2C Buffer Out
-    appInitI2CBufferOUT();
-}
-
 
 // App I2C task every 20ms
 void appI2CPeriodic20ms(void)
@@ -430,8 +350,26 @@ void appI2CPeriodic20ms(void)
     }
     else
     {
-        // Check if Reset counter was Updated
-        if(resetCounterUpdatedBytes == 0)
+        //------------------------------------        
+        // Check if EEPROM has to be updated before a Power Cycle
+        //------------------------------------        
+        // PART 1: Update WDT Enable
+        if(resetBytesToUpdate > 2)
+        {
+            // Save to EEPROM the new value
+            eeprom_newWriteRequest(EEPROM_WDT_ADDR, 
+                g_tempI2CData.bytes[I2C_REG_WDTEN]);
+            // Check if EEPROM Finished
+            if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
+            {
+                // First EEPROM byte updated
+                resetBytesToUpdate = 2;
+            }
+        }        
+        // PART 2: Update Reset Counter (First Byte)
+        // Has to be else if in order to process one EEPROM byte each 
+        // function call
+        else if(resetBytesToUpdate == 2)
         {
             // Save to EEPROM the new value
             eeprom_newWriteRequest(EEPROM_RESET_COUNTER_ADDR, 
@@ -440,12 +378,13 @@ void appI2CPeriodic20ms(void)
             if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
             {
                 // First EEPROM byte updated
-                resetCounterUpdatedBytes = 1;
+                resetBytesToUpdate = 1;
             }
         }
+        // PART 3: Update Reset Counter (Second Byte)
         // Has to be else if in order to process one EEPROM byte each 
         // function call
-        else if(resetCounterUpdatedBytes == 1)
+        else if(resetBytesToUpdate == 1)
         {
             // Save to EEPROM the new value
             eeprom_newWriteRequest(EEPROM_RESET_COUNTER_ADDR + 1, 
@@ -454,7 +393,7 @@ void appI2CPeriodic20ms(void)
             if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
             {
                 // Finished updating EEPROM
-                resetCounterUpdatedBytes = 2;
+                resetBytesToUpdate = 0;
                 // No more waiting for shutdown
                 powerCycleTimer = 0;
             }
@@ -466,22 +405,31 @@ void appI2CPeriodic20ms(void)
 void appI2CPeriodic1s(void)
 {
     //------------------------------
-    // Check Restart Timer and Restart Timer Limit
+    // Check if WDT is enabled
     //------------------------------
-    if(g_appI2CData.fields.resetTimer >= g_appI2CData.fields.resetTimerLimit)
+    if(g_appI2CData.fields.rPiWDTEnable == RPI_WDT_ENABLE_FLAG)
     {
-        // Update Reset Counter
-        g_appI2CData.fields.resetCounter++;
-        // Reset Counter to be updated in EEPROM
-        resetCounterUpdatedBytes = 0;
-        // Cycle Power Now (as soon as reset counter is updated in EEPROM)
-        powerCycleRequested = true;
-        powerCycleTimer = DEFAULT_RST_ERR_TIMER;
-    }
-    else 
-    {
-        g_appI2CData.fields.resetTimer++;
-    }
+        //------------------------------
+        // Check Restart Timer and Restart Timer Limit
+        //------------------------------
+        if(g_appI2CData.fields.resetTimer >= 
+            g_appI2CData.fields.resetTimerLimit)
+        {
+            // Update Reset Counter
+            g_appI2CData.fields.resetCounter++;
+            // Disable WDT for the next power up
+            g_appI2CData.fields.rPiWDTEnable = 0;            
+            // Cycle Power Now (as soon as reset counter is updated in EEPROM)
+            powerCycleRequested = true;
+            powerCycleTimer = MAX_PC_EEP_UPDATE_TIME;
+            // Reset Counter and WDT Enable to be updated in EEPROM
+            resetBytesToUpdate = 3;
+        }
+        else 
+        {
+            g_appI2CData.fields.resetTimer++;
+        }
+    }    
     //------------------------------
     // Check for Power Cycle
     //------------------------------
@@ -493,7 +441,7 @@ void appI2CPeriodic1s(void)
             powerCycleTimer--;
         }
         // If power cycle timer elapsed elapsed: cycle power anyway (even 
-        // without EEPROM update - the time ofr it to get updated already 
+        // without EEPROM update - the time for it to get updated already 
         // elapsed)
         if(powerCycleTimer == 0)
         {
@@ -519,7 +467,7 @@ void appI2CPeriodic1s(void)
     else
     {
         // Restart Timer
-        i2cErrorTimer = DEFAULT_I2C_ERR_TIMER;
+        i2cErrorTimer = MAX_I2C_ERROR_TIME;
     }
 }
 
@@ -535,7 +483,7 @@ int main(void)
     // Init Restart Control
     powerCycleRequested = false;
     // Init I2c Error Control
-    i2cErrorTimer = DEFAULT_I2C_ERR_TIMER;
+    i2cErrorTimer = MAX_I2C_ERROR_TIME;
     // Init modules
     led_init();
     adc_init();

@@ -1,6 +1,12 @@
 
 # SW_HMSG_HAT_V02
 
+## Overall Description
+- ATTiny communicates with the Raspberry Pi through I2C. The device addres, and the registers can be found below on the [I2C section](#I2C).
+- The Raspberry Pi can configure the ATTiny as an external Watchdog. In this case, if the Raspberry Pi fails to clear a _Reset Timer_ through an I2C command, the ATTiny will cycle the power. All the timing parameters are described in the [I2C section](#I2C).
+- If the ATTiny cycles the power due to this _Reset Timer_ expiring, on the next power up, it will no longer cycle the power until the Raspberry Pi enables the External Watchdog functionality again (this means the ATTiny will perform a single power cycle to recover the Raspberry Pi when _Reset Timer_ expires).
+- The behaviour of the LED controlled by ATTiny (LED3 on the board) can be found below on the [LED section](#LED).
+
 ## Structure
 
 | Path                               | Purpose                                                                                                                             |
@@ -262,7 +268,8 @@ The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more 
 ### I2C Registers
 |Register Address|Name|Read/Write|Description|
 |----------------|----|----------|-----------|
-|**0x00**<br>**0x01**| Raspberry Pi Command | Written by **Host** only. | Address **0x00**: Commands sent from the Raspberry Pi: <br>• **0x01**: Reset the _Reset Timer_<br> • **0x11**: Reboot ATTiny <br> • **0x21**: Cycle Power in x seconds (_see address **0x01**_)<br> • **Other values**: Ignored<br><br>Address **0x01**: x Seconds to wait for a "Cycle Power" when this command is issued (_see address **0x00**_).
+|**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x01**: Reset the _Reset Timer_<br> • **0x11**: Reboot ATTiny <br> • **0x21**: Cycle Power in x seconds (_see address **0x01**_)<br> • **Other values**: Ignored<br>
+|**0x01**| Power Off Delay | Written by **Host** only. | Seconds to wait for a "Cycle Power" when this command is issued (_see Register **0x00** command **0x21**_).
 |**0x02**| Raspberry Pi Watchdog Enable | Written by **Host** only. | If set to **0x63**, ATTiny will update the _Reset Timer_ (see register address _**0x03**_ and _**0x04**_) every second, and if it reaches the _Reset Timer Limit_ (see register address _**0x05**_ and _**0x06**_), the ATtiny will cycle the power.|
 |**0x03**<br>**0x04**| Reset Timer | Written by **Host** and **Client**. | _Reset Timer_ is a 16 bit counter updated every second. Register Address **0x03** contains the LSB, and Register Address **0x04** contains the MSB.|
 |**0x05**<br>**0x06**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value chacked against _Reset Timer_. Register Address **0x05** contains the LSB, and Register Address **0x06** contains the MSB.|
@@ -282,4 +289,9 @@ The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more 
 
 ## ADC
 - The ADC module just performs the ADC conversion for the tempoerature channel. The temperature calculation can be performed by the Raspberry Pi using this reading and the temperature calibration fields in order to save program space on the ATTiny.
+> REMARK: No action is done by ATTiny with the ADC Reading. It is up to the Raspberry Pi to decide what to do with this information.
 
+## EEPROM
+The following fields (I2C Registers) are saved in EEPROM:
+- **Raspberry Pi Watchdog Enable**: It is mandatory to save it to EEPROM in case there is a power supply fail (resetting both the ATTiny and Raspberry Pi) and the Raspberry Pi fails to boot after it.
+- **Reset Counter**: It is only updated in case the External Watchdog feature was enabled, and the _Reset Timer_ expired. Any other reset / power fail / power cycle mechanism will not increment this counter.
