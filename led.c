@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------//
 //  REVISION |    DATE     |                               |      AUTHOR      //
 //----------------------------------------------------------------------------//
-//  1.00     | 15/Mai/2026 |                               | ALCP             //
+//  1.00     | 15/May/2026 |                               | ALCP             //
 // - First version                                                            //
 //----------------------------------------------------------------------------//
 
@@ -55,13 +55,6 @@ static volatile uint16_t g_duty16;
 // Config
 static volatile ledConfig g_ledConfig;
 
-static volatile uint8_t g_configactiveTimeON;
-static volatile uint8_t g_configactiveTimePER;
-static volatile uint8_t g_configTransmitDuty;
-static volatile uint8_t g_configtransmitTimeON;
-static volatile uint8_t g_configtransmitTimePER;
-
-
 //----------------------------------------------------------------------------//
 // INTERNAL FUNCTIONS
 //----------------------------------------------------------------------------//
@@ -84,9 +77,9 @@ void led_init(void)
     g_ledConfig.activeTimePER = LED_ACTIVE_TPER_INIT;
     g_ledConfig.activeDuty = LED_ACTIVE_DUTY_INIT;
     // Initial transmit config
-    g_configTransmitDuty = LED_TRANSM_DUTY_INIT;
-    g_configtransmitTimeON = LED_TRANSM_TON_INIT;
-    g_configtransmitTimePER = LED_TRANSM_TPER_INIT;
+    g_ledConfig.transmitDuty = LED_TRANSM_DUTY_INIT;
+    g_ledConfig.transmitTimeON = LED_TRANSM_TON_INIT;
+    g_ledConfig.transmitTimePER = LED_TRANSM_TPER_INIT;
     // Set duty to 0%
     g_duty8 = 0;
     g_duty16 = 0;
