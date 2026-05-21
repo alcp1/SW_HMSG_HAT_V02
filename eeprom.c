@@ -97,6 +97,10 @@ uint8_t eeprom_requestStatus(void)
                 g_state = E_ST_FINISHED;
             }
             break;
+        default:
+            g_state = E_ST_WAIT_BUSY;
+            break;
+        
     }
     if(g_state != E_ST_FINISHED)
     {

@@ -20,12 +20,13 @@
 // INTERNAL DEFINITIONS
 //----------------------------------------------------------------------------//
 // GENERAL
-#define VERSION             0
-#define SECONDS_TICKS       (1000U/20)
-#define RPI_WDT_ENABLE_FLAG 0x63 // Arbitrary number
-#define RPI_MIN_RESET_TIML  300 // 5 minutes minimum for Reset Timer Limit
-#define DEFAULT_PWRC_TIMER  30 // 30 seconds for power cycle
-#define DEFAULT_ERR_TIMER   30 // 30 seconds
+#define VERSION                 0
+#define SECONDS_TICKS           (1000U/20)
+#define RPI_WDT_ENABLE_FLAG     0x63 // Arbitrary number
+#define RPI_MIN_RESET_TIML      300 // 5 minutes minimum for Reset Timer Limit
+#define DEFAULT_PWRC_TIMER      30 // 30 seconds for power cycle
+#define DEFAULT_I2C_ERR_TIMER   30 // 30 seconds for I2C error before SW reset
+#define DEFAULT_RST_ERR_TIMER   30 // 30 seconds for Reset Counter update
 // EEPROM - OFFSETS
 #define EEPROM_WDT_OFFSET_ADDR                  0
 #define EEPROM_RESET_TIMER_LIMIT_OFFSET_ADDR    1
@@ -67,6 +68,7 @@ static bool g_tempIsI2CUpdated[I2C_REG_ADDR_SIZE];
 //----------------------------------
 static bool powerCycleRequested;
 static uint8_t powerCycleTimer;
+static uint8_t resetCounterUpdatedBytes;
 //----------------------------------
 // I2C Error Control
 //----------------------------------
@@ -238,7 +240,7 @@ void appSyncI2CData(void)
     {
         // Update internal data
         memcpy((void*)&(g_appI2CData.fields.ledConfig), 
-            (const void*)&(g_tempI2CData.fields.ledConfig), sizeof(ledConfig));        
+            (const void*)&(g_tempI2CData.fields.ledConfig), sizeof(ledConfig));
         led_setLedConfig(&(g_appI2CData.fields.ledConfig));
         // Set as clear on the local copy
         memset((void*)&(g_locIsI2CUpdated[I2C_REG_LEDC]), true, 
@@ -392,7 +394,11 @@ void appHandleI2CCommands(void)
             g_appI2CData.fields.rPiCommand = 0;
             powerCycleRequested = true;
             powerCycleTimer = g_appI2CData.fields.rPiCommandAux;
+            // Do not update reset counter in EEPROM
+            resetCounterUpdatedBytes = 2;
             // TO DO
+            break;
+        default:
             break;
     }
 }
@@ -412,25 +418,65 @@ void appI2CInit(void)
 // App I2C task every 20ms
 void appI2CPeriodic20ms(void)
 {
-    // Update ADC reading
-    g_appI2CData.fields.adcReading = adc_getADCReading();
-    // Check if I2c Host updated data
-    appSyncI2CData();
-    // Handle I2C Commands
-    appHandleI2CCommands();    
+    // Check I2C and update variables only if a power cycle was not requested
+    if(!powerCycleRequested)
+    {
+        // Update ADC reading
+        g_appI2CData.fields.adcReading = adc_getADCReading();
+        // Check if I2c Host updated data
+        appSyncI2CData();
+        // Handle I2C Commands
+        appHandleI2CCommands();
+    }
+    else
+    {
+        // Check if Reset counter was Updated
+        if(resetCounterUpdatedBytes == 0)
+        {
+            // Save to EEPROM the new value
+            eeprom_newWriteRequest(EEPROM_RESET_COUNTER_ADDR, 
+                g_tempI2CData.bytes[I2C_REG_RCNT]);
+            // Check if EEPROM Finished
+            if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
+            {
+                // First EEPROM byte updated
+                resetCounterUpdatedBytes = 1;
+            }
+        }
+        // Has to be else if in order to process one EEPROM byte each 
+        // function call
+        else if(resetCounterUpdatedBytes == 1)
+        {
+            // Save to EEPROM the new value
+            eeprom_newWriteRequest(EEPROM_RESET_COUNTER_ADDR + 1, 
+                g_tempI2CData.bytes[I2C_REG_RCNT + 1]);
+            // Check if EEPROM Finished
+            if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
+            {
+                // Finished updating EEPROM
+                resetCounterUpdatedBytes = 2;
+                // No more waiting for shutdown
+                powerCycleTimer = 0;
+            }
+        }
+    }
 }
 
 // App I2C task every second
 void appI2CPeriodic1s(void)
 {
     //------------------------------
-    // Check Restar Timer and Restar Timer Limit
+    // Check Restart Timer and Restart Timer Limit
     //------------------------------
     if(g_appI2CData.fields.resetTimer >= g_appI2CData.fields.resetTimerLimit)
     {
-        // Cycle Power Now
+        // Update Reset Counter
+        g_appI2CData.fields.resetCounter++;
+        // Reset Counter to be updated in EEPROM
+        resetCounterUpdatedBytes = 0;
+        // Cycle Power Now (as soon as reset counter is updated in EEPROM)
         powerCycleRequested = true;
-        powerCycleTimer = 0;
+        powerCycleTimer = DEFAULT_RST_ERR_TIMER;
     }
     else 
     {
@@ -441,15 +487,19 @@ void appI2CPeriodic1s(void)
     //------------------------------
     if(powerCycleRequested)
     {
+        // When power cycle requsted, decrement power cycle timer
         if(powerCycleTimer > 0)
         {
             powerCycleTimer--;
         }
-        else
+        // If power cycle timer elapsed elapsed: cycle power anyway (even 
+        // without EEPROM update - the time ofr it to get updated already 
+        // elapsed)
+        if(powerCycleTimer == 0)
         {
             // Shutdown
             IO_SET_SHDN_ACTIVE();
-        }
+        }        
     }
     //------------------------------
     // Check for I2C Errors
@@ -460,7 +510,7 @@ void appI2CPeriodic1s(void)
         {
             i2cErrorTimer--;
         }
-        if(i2cErrorTimer == 0)
+        else
         {
             // Restart ATTiny402
             RSTCTRL_SoftwareReset();
@@ -469,7 +519,7 @@ void appI2CPeriodic1s(void)
     else
     {
         // Restart Timer
-        i2cErrorTimer = DEFAULT_ERR_TIMER;
+        i2cErrorTimer = DEFAULT_I2C_ERR_TIMER;
     }
 }
 
@@ -484,9 +534,8 @@ int main(void)
     IO_SET_SHDN_INACTIVE();
     // Init Restart Control
     powerCycleRequested = false;
-    powerCycleTimer = 0;
     // Init I2c Error Control
-    i2cErrorTimer = DEFAULT_ERR_TIMER;
+    i2cErrorTimer = DEFAULT_I2C_ERR_TIMER;
     // Init modules
     led_init();
     adc_init();

@@ -22,11 +22,11 @@ extern "C" {
 typedef struct  
 {
     uint8_t activeDuty;
-    uint8_t activeONtime;
-    uint8_t activeOFFtime;
+    uint8_t activeTimeON;
+    uint8_t activeTimePER;
     uint8_t transmitDuty;
-    uint8_t transmitONtime;
-    uint8_t transmitOFFtime;
+    uint8_t transmitTimeON;
+    uint8_t transmitTimePER;
 } ledConfig;
 
 
