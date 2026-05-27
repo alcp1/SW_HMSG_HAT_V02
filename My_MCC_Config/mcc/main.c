@@ -23,7 +23,7 @@
 #define VERSION                 0
 #define SECONDS_TICKS           (1000U/20)
 #define RPI_WDT_ENABLE_FLAG     0x63 // Arbitrary number
-#define DEFAULT_RESET_TIML      (5*60) // 5 minutes for Reset Timer Limit
+#define DEFAULT_RESET_TIML      (60*60) // 60 minutes for Reset Timer Limit
 #define DEFAULT_PWRC_TIME       30 // 30 seconds for power cycle
 #define MAX_I2C_ERROR_TIME      25 // 25 seconds for I2C error before SW reset
 #define MAX_PC_EEP_UPDATE_TIME  10 // 10 seconds for Reset Counter update
@@ -327,7 +327,7 @@ void appHandleI2CCommands(void)
             // Cycle Power in POWER_CYCLE_DELAY seconds
             powerCycleRequested = true;
             powerCycleTimer = g_appI2CData.fields.rPiPCDelay;
-            // Do NOT update Reset Counter or WDT Enable in EEPROM
+            // Do NOT update Reset Counter in EEPROM
             resetBytesToUpdate = 0;
             break;
         default:
@@ -352,24 +352,9 @@ void appI2CPeriodic20ms(void)
     {
         //------------------------------------        
         // Check if EEPROM has to be updated before a Power Cycle
-        //------------------------------------        
-        // PART 1: Update WDT Enable
-        if(resetBytesToUpdate > 2)
-        {
-            // Save to EEPROM the new value
-            eeprom_newWriteRequest(EEPROM_WDT_ADDR, 
-                g_tempI2CData.bytes[I2C_REG_WDTEN]);
-            // Check if EEPROM Finished
-            if(eeprom_requestStatus() == EEPROM_REQUEST_FINISHED)
-            {
-                // First EEPROM byte updated
-                resetBytesToUpdate = 2;
-            }
-        }        
-        // PART 2: Update Reset Counter (First Byte)
-        // Has to be else if in order to process one EEPROM byte each 
-        // function call
-        else if(resetBytesToUpdate == 2)
+        //------------------------------------
+        // PART 1: Update Reset Counter (First Byte)
+        if(resetBytesToUpdate >= 2)
         {
             // Save to EEPROM the new value
             eeprom_newWriteRequest(EEPROM_RESET_COUNTER_ADDR, 
@@ -381,7 +366,7 @@ void appI2CPeriodic20ms(void)
                 resetBytesToUpdate = 1;
             }
         }
-        // PART 3: Update Reset Counter (Second Byte)
+        // PART 2: Update Reset Counter (Second Byte)
         // Has to be else if in order to process one EEPROM byte each 
         // function call
         else if(resetBytesToUpdate == 1)
@@ -416,14 +401,12 @@ void appI2CPeriodic1s(void)
             g_appI2CData.fields.resetTimerLimit)
         {
             // Update Reset Counter
-            g_appI2CData.fields.resetCounter++;
-            // Disable WDT for the next power up
-            g_appI2CData.fields.rPiWDTEnable = 0;            
+            g_appI2CData.fields.resetCounter++;            
             // Cycle Power Now (as soon as reset counter is updated in EEPROM)
             powerCycleRequested = true;
             powerCycleTimer = MAX_PC_EEP_UPDATE_TIME;
-            // Reset Counter and WDT Enable to be updated in EEPROM
-            resetBytesToUpdate = 3;
+            // Reset Counter to be updated in EEPROM
+            resetBytesToUpdate = 2;
         }
         else 
         {
