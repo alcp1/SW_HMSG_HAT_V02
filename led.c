@@ -1,6 +1,6 @@
-/*
- * Includes
- */
+//----------------------------------------------------------------------------//
+// INCLUDES
+//----------------------------------------------------------------------------//
 #include "My_MCC_Config/mcc_generated_files/timer/tca0.h"
 #include "led.h"
 #include <string.h>
@@ -12,7 +12,7 @@
 #define LED_INIT_TIME           (1700U/20)          // 1,7s @ 20ms period
 #define LED_INIT_DUTY_INCREMENT (255U/(1700U/20))   // 1,7s @ 20ms period
 // ACTIVE STATE INITIAL CONFIG
-#define LED_ACTIVE_DUTY_INIT    (127)               // 50%
+#define LED_ACTIVE_DUTY_INIT    (102)               // 40%
 #define LED_ACTIVE_TON_INIT     (40U/20)            // 40ms @ 20ms period
 #define LED_ACTIVE_TPER_INIT    (460U/20)           // 460ms @ 20ms period
 // TRASNMISSTION SIGNALING INITIAL CONFIG

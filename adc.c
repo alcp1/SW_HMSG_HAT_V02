@@ -1,6 +1,6 @@
-/*
- * Includes
- */
+//----------------------------------------------------------------------------//
+// INCLUDES
+//----------------------------------------------------------------------------//
 #include <stdio.h>
 #include "My_MCC_Config/mcc_generated_files/system/system.h"
 #include "adc.h"

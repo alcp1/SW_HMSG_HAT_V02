@@ -6,6 +6,7 @@
             "id": "conf1",
             "device": "ATtiny402",
             "imagePath": "./out/SW_HMSG_HAT_V02/default.elf",
+            "tool": "PICkit 5",
             "packs": [
                 {
                     "name": "ATtiny_DFP",
