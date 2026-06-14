@@ -1,12 +1,3 @@
-//----------------------------------------------------------------------------//
-//                               OBJECT HISTORY                               //
-//----------------------------------------------------------------------------//
-//  REVISION |    DATE     |                               |      AUTHOR      //
-//----------------------------------------------------------------------------//
-//  1.00     | 17/May/2026 |                               | ALCP             //
-// - First version                                                            //
-//----------------------------------------------------------------------------//
-
 #ifndef I2C_H
 #define I2C_H
 
@@ -17,7 +8,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "led.h"
-#include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/i2c_client_types.h"
+#include "My_MCC_Config/mcc_generated_files/i2c_client/i2c_client_types.h"
 
 //----------------------------------------------------------------------------//
 // EXTERNAL DEFINITIONS

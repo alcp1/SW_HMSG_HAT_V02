@@ -46,3 +46,4 @@ out/**/*.xml
 out/**/*.elf
 out/**/*.lst
 out/**/*.map
+*local.json

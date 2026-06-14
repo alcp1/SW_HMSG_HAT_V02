@@ -1,18 +1,9 @@
-//----------------------------------------------------------------------------//
-//                               OBJECT HISTORY                               //
-//----------------------------------------------------------------------------//
-//  REVISION |    DATE     |                               |      AUTHOR      //
-//----------------------------------------------------------------------------//
-//  1.00     | 15/May/2026 |                               | ALCP             //
-// - First version                                                            //
-//----------------------------------------------------------------------------//
-
 #include "mcc_generated_files/system/system.h"
-#include "../../adc.h"
-#include "../../io.h"
-#include "../../led.h"
-#include "../../i2c.h"
-#include "../../eeprom.h"
+#include "../adc.h"
+#include "../io.h"
+#include "../led.h"
+#include "../i2c.h"
+#include "../eeprom.h"
 #include <stdint.h>
 #include <string.h>
 

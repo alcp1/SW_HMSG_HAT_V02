@@ -168,7 +168,7 @@ On the left menu, select "Device Resource", and add the following items:
 - Timer Mode: **16 Bit (Normal)**
 - Clock Select: **System Clock / 4**
 - Count Direction: **UP**
-- Requested Period: 2.4μs ≤ **52.4288ms** ≤ 52.4288ms
+- Requested Period: 2.4μs ≤ **204.8μs** ≤ 52.4288ms
 - Event Action A: **POSEDGE**
 - Waveform Generation Mode: **Single Slope PWM**
 - Compare Channel 0 Enable: **ON** (button in _ON_)
@@ -180,6 +180,7 @@ On the left menu, select "Device Resource", and add the following items:
 - Compare Channel 1 Interrupt Enable: **OFF** (button in _OFF_)
 - Compare Channel 2 Interrupt Enable: **OFF** (button in _OFF_)
 - Generate ISR: **OFF** (button in _OFF_)
+> **REMARK**: Requested Period is set to 204.8μs so that TCA0.SINGLE.PER = 0xFF. **CALCULATION**: main clock is 20MHz divided by 4, which is 5MHz. Module clock is main clock divided by 4, which is 1.25MHz. Requested period = 256*(1/1.25MHz)
 
 #### Timer0
 - Custom Name: **Timer0**

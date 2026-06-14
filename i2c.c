@@ -1,14 +1,5 @@
- //----------------------------------------------------------------------------//
-//                               OBJECT HISTORY                               //
-//----------------------------------------------------------------------------//
-//  REVISION |    DATE     |                               |      AUTHOR      //
-//----------------------------------------------------------------------------//
-//  1.00     | 17/May/2026 |                               | ALCP             //
-// - First version                                                            //
-//----------------------------------------------------------------------------//
-
 #include "i2c.h"
-#include "My_MCC_Config/mcc/mcc_generated_files/i2c_client/twi0.h"
+#include "My_MCC_Config/mcc_generated_files/i2c_client/twi0.h"
 
 // See: https://onlinedocs.microchip.com/oxy/GUID-420E6AAC-9141-47BF-A4C7-A6EA17246D0D-en-US-21/GUID-6E279462-9E94-410C-9A48-7D719FFBC0AF.html
 

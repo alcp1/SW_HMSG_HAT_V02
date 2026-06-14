@@ -1,16 +1,7 @@
-//----------------------------------------------------------------------------//
-//                               OBJECT HISTORY                               //
-//----------------------------------------------------------------------------//
-//  REVISION |    DATE     |                               |      AUTHOR      //
-//----------------------------------------------------------------------------//
-//  1.00     | 15/May/2026 |                               | ALCP             //
-// - First version                                                            //
-//----------------------------------------------------------------------------//
-
 /*
  * Includes
  */
-#include "My_MCC_Config/mcc/mcc_generated_files/timer/tca0.h"
+#include "My_MCC_Config/mcc_generated_files/timer/tca0.h"
 #include "led.h"
 #include <string.h>
 
@@ -133,7 +124,7 @@ void led_periodic(void)
             // Update total time
             g_activeTotalTime++;
             // Check TON
-            if(g_activeTotalTime >= g_ledConfig.activeTimeON)
+            if(g_activeTotalTime > g_ledConfig.activeTimeON)
             {
                 // Duty = OFF (after Time ON)
                 g_duty8 = 0;
@@ -144,12 +135,10 @@ void led_periodic(void)
                 g_duty8 = g_ledConfig.activeDuty;
             }
             // Check total time
-            if(g_activeTotalTime >= g_ledConfig.activeTimePER)
+            if(g_activeTotalTime > g_ledConfig.activeTimePER)
             {
                 // Restart Cycle
                 g_activeTotalTime = 0;
-                // Duty = configured value
-                g_duty8 = g_ledConfig.activeDuty;
             }
             //--------------------------------------------------------
             // TRANSMIT LED SIGNALING - Active when there is a transmit 
@@ -161,7 +150,7 @@ void led_periodic(void)
                 // Update total time
                 g_transmitTotalTime++;
                 // Check TON
-                if(g_transmitTotalTime >= g_ledConfig.transmitTimeON)
+                if(g_transmitTotalTime > g_ledConfig.transmitTimeON)
                 {
                     // Duty = OFF (after Time ON)
                     g_duty8 = 0;
@@ -172,7 +161,7 @@ void led_periodic(void)
                     g_duty8 = g_ledConfig.transmitDuty;
                 }
                 // Check total time
-                if(g_transmitTotalTime >= g_ledConfig.transmitTimePER)
+                if(g_transmitTotalTime > g_ledConfig.transmitTimePER)
                 {
                     // End of transmit signaling
                     g_transmitTotalTime = 0;
