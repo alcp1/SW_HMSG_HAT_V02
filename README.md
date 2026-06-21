@@ -2,10 +2,10 @@
 # SW_HMSG_HAT_V02
 
 ## Overall Description
-- ATTiny communicates with the Raspberry Pi through I2C. The device addres, and the registers can be found below on the [I2C section](#I2C).
-- The Raspberry Pi can configure the ATTiny as an external Watchdog. In this case, if the Raspberry Pi fails to clear a _Reset Timer_ through an I2C command, the ATTiny will cycle the power. All the timing parameters are described in the [I2C section](#I2C).
+- ATTiny communicates with the Raspberry Pi through I2C. The device address, and the registers can be found below on the [I2C section](#i2c).
+- The Raspberry Pi can configure the ATTiny as an external Watchdog. In this case, if the Raspberry Pi fails to clear a _Reset Timer_ through an I2C command, the ATTiny will cycle the power. All the timing parameters are described in the [I2C section](#i2c).
 - If the ATTiny cycles the power due to this _Reset Timer_ expiring, on the next power up, it will no longer cycle the power until the Raspberry Pi enables the External Watchdog functionality again (this means the ATTiny will perform a single power cycle to recover the Raspberry Pi when _Reset Timer_ expires).
-- The behaviour of the LED controlled by ATTiny (LED3 on the board) can be found below on the [LED section](#LED).
+- The behaviour of the LED controlled by ATTiny (LED3 on the board) can be found below on the [LED section](#led).
 
 ## Structure
 
@@ -47,7 +47,6 @@ On the left menu, select "Device Resource", and add the following items:
 - Timer: TCB0
 - Timer: Timer
 - System: BOD
-- System: BOD
 - System: RSTCTRL
 - System: WDT
 > REMARK: ADC0 is for temperature reading. TCB0 is for periodic interrupts. TCA0 is for PWM.
@@ -69,7 +68,6 @@ On the left menu, select "Device Resource", and add the following items:
 - BOD Operation in Sleep Mode: **Enabled**
 - BOOTEND: 0 ≤ **0**
 - OSCCFG - Frequency Select: **20 MHz**
-- SYSCFG0 - CRC Source: **Disable CRC**
 - SYSCFG0 - CRC Source: **Disable CRC**
 - EEPROM Save: **OFF** (button in _OFF_)
 - Reset Pin Configuration: **UPDI Mode**
@@ -96,7 +94,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Function: **SDA** _(should already be set - greyed out)_
   - Direction: **in/out** _(should already be set - greyed out)_
   - Custom Name: **IO_PA1**
-  - Start Hugh: **No** (_not selected_)
+  - Start High: **No** (_not selected_)
   - Inverted I/O: **No** (_not selected_)
   - Pull-Up: **No** (_not selected_)
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
@@ -106,7 +104,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Function: **SCL** _(should already be set - greyed out)_
   - Direction: **in/out** _(should already be set - greyed out)_
   - Custom Name: **IO_PA2**
-  - Start Hugh: **No** (_not selected_)
+  - Start High: **No** (_not selected_)
   - Inverted I/O: **No** (_not selected_)
   - Pull-Up: **No** (_not selected_)
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
@@ -116,7 +114,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Function: **GPIO**
   - Direction: **output**
   - Custom Name: **IO_PA3**
-  - Start Hugh: **No** (_not selected_)
+  - Start High: **No** (_not selected_)
   - Inverted I/O: **No** (_not selected_)
   - Pull-Up: **No** (_not selected_)
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
@@ -126,7 +124,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Function: **GPIO**
   - Direction: **input**
   - Custom Name: **SUP_SHDN**
-  - Start Hugh: **No** (_not selected_)
+  - Start High: **No** (_not selected_)
   - Inverted I/O: **No** (_not selected_)
   - Pull-Up: **No** (_not selected_)
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
@@ -136,7 +134,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Function: **WO0**
   - Direction: **output**
   - Custom Name: **LED_uC**
-  - Start Hugh: **No** (_not selected_)
+  - Start High: **No** (_not selected_)
   - Inverted I/O: **No** (_not selected_)
   - Pull-Up: **No** (_not selected_)
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
@@ -163,12 +161,10 @@ On the left menu, select "Device Resource", and add the following items:
 - Generate Initializer Code: **Generate Initializer Code**
 - Timer Enable: **ON** (button in _ON_)
 - Run Standby Mode: **OFF** (button in _OFF_)
-- Timer Enable: **ON** (button in _ON_)
-- Run Standby Mode: **OFF** (button in _OFF_)
 - Timer Mode: **16 Bit (Normal)**
 - Clock Select: **System Clock / 4**
 - Count Direction: **UP**
-- Requested Period: 2.4μs ≤ **204.8μs** ≤ 52.4288ms
+- Requested Period: 2.4µs ≤ **204.8µs** ≤ 52.4288ms
 - Event Action A: **POSEDGE**
 - Waveform Generation Mode: **Single Slope PWM**
 - Compare Channel 0 Enable: **ON** (button in _ON_)
@@ -180,7 +176,7 @@ On the left menu, select "Device Resource", and add the following items:
 - Compare Channel 1 Interrupt Enable: **OFF** (button in _OFF_)
 - Compare Channel 2 Interrupt Enable: **OFF** (button in _OFF_)
 - Generate ISR: **OFF** (button in _OFF_)
-> **REMARK**: Requested Period is set to 204.8μs so that TCA0.SINGLE.PER = 0xFF. **CALCULATION**: main clock is 20MHz divided by 4, which is 5MHz. Module clock is main clock divided by 4, which is 1.25MHz. Requested period = 256*(1/1.25MHz)
+> **REMARK**: Requested Period is set to 204.8µs so that TCA0.SINGLE.PER = 0xFF. **CALCULATION**: main clock is 20MHz divided by 4, which is 5MHz. Module clock is main clock divided by 4, which is 1.25MHz. Requested period = 256*(1/1.25MHz)
 
 #### Timer0
 - Custom Name: **Timer0**
@@ -248,38 +244,39 @@ On the left menu, select "Device Resource", and add the following items:
 - Custom Name: **I2C0_Client**
 - Clock Stretching: **ON** _(should already be set - greyed out)_
 - Client Address: 0x0 ≤ **0x1E** ≤ 0x7F
-- Client Mask: 0x0 ≤ **0x7F** ≤ 0x7F
+- Client Mask: 0x0 ≤ **0x00** ≤ 0x7F
 - I2C Client PLIB Selector: **TWI0**
 ##### I2C0_Client - TWI0_Peripheral
 - Interrupt Driven: **ON** (button in _ON_)
 - General Call Address Recognition: **ON** (button in _ON_)
 - Address/Stop Interrupt Enable: **ON** (button in _ON_)
+- Data Interrupt Enable: **ON** (button in _ON_)
 - Stop Interrupt Enable: **ON** _(should already be set - greyed out)_
 
 #### Main 
 - Generate main.c file: **ON** _(should already be set - greyed out)_
 
 ## MCC Generate
-On the bottom tab, click on "Notifications" to see any messagens that could prevent code generation. After checking, on the left menu, below the MCC Tab, click on "Generate" button.
+On the bottom tab, click on "Notifications" to see any messages that could prevent code generation. After checking, on the left menu, below the MCC Tab, click on "Generate" button.
 
 ## I2C
 ### I2C Address
-The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more details). Any address different than this will be ignored.
+The Client Address is 0x1E (see the [I2C0_Client Config](#i2c0_client) for more details). Any address different than this will be ignored.
 
 ### I2C Registers
 |Register Address|Name|Read/Write|Description|
 |----------------|----|----------|-----------|
-|**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x01**: Reset the _Reset Timer_<br> • **0x11**: Reboot ATTiny <br> • **0x21**: Cycle Power in x seconds (_see address **0x01**_)<br> • **Other values**: Ignored<br>
-|**0x01**| Power Off Delay | Written by **Host** only. | Seconds to wait for a "Cycle Power" when this command is issued (_see Register **0x00** command **0x21**_).
+|**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x01**: Reset the _Reset Timer_<br> • **0x11**: Reboot ATTiny <br> • **0x21**: Cycle Power in x seconds (_see address **0x01**_)<br> • **Other values**: Ignored<br>|
+|**0x01**| Power Off Delay | Written by **Host** only. | Seconds to wait for a "Cycle Power" when this command is issued (_see Register **0x00** command **0x21**_).|
 |**0x02**| Raspberry Pi Watchdog Enable | Written by **Host** only. | If set to **0x63**, ATTiny will update the _Reset Timer_ (see register address _**0x03**_ and _**0x04**_) every second, and if it reaches the _Reset Timer Limit_ (see register address _**0x05**_ and _**0x06**_), the ATtiny will cycle the power.|
 |**0x03**<br>**0x04**| Reset Timer | Written by **Host** and **Client**. | _Reset Timer_ is a 16 bit counter updated every second. Register Address **0x03** contains the LSB, and Register Address **0x04** contains the MSB.|
-|**0x05**<br>**0x06**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value chacked against _Reset Timer_. Register Address **0x05** contains the LSB, and Register Address **0x06** contains the MSB.|
-|**0x07**<br>**0x08**| Reset Counter | Written by **Host** and **Client**. | _Reset Counter_ is a 16 bit value saven on the ATTiny EEPROM that counts how many times the ATTiny has cycled the power, triggered by the watchdog mechanism (_Reset Timer_ > _Reset Timer Limit_). Register Address **0x07** contains the LSB, and Register Address **0x08** contains the MSB. <br><br> _**REMARK:** Other Power Cycle mechanisms (such as Raspberry Pi command) will not update this counter!_|
-|**0x09**<br>**0x0A**<br>**0x0B**| LED Active Mode parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when in active mode (after initialization): <br>• Register **0x09**: The LED _duty_ cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0A**: The LED _ON_ time (in seconds). <br>• Register **0x0B**: The LED _Period_ time (in seconds).|
-|**0x0C**<br>**0x0D**<br>**0x0E**| LED I2C Transmit Signaling parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when an I2C transmission finishes - end bit detected:<br>• Register **0x0C**: The LED _duty_ cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0D**: The LED _ON_ time (in seconds). <br>• Register **0x0E**: The LED _Period_ time (in seconds).|
+|**0x05**<br>**0x06**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value compared with _Reset Timer_. Register Address **0x05** contains the LSB, and Register Address **0x06** contains the MSB.|
+|**0x07**<br>**0x08**| Reset Counter | Written by **Host** and **Client**. | _Reset Counter_ is a 16 bit value saved on the ATTiny EEPROM that counts how many times the ATTiny has cycled the power, triggered by the watchdog mechanism (_Reset Timer_ > _Reset Timer Limit_). Register Address **0x07** contains the LSB, and Register Address **0x08** contains the MSB. <br><br> _**REMARK:** Other Power Cycle mechanisms (such as Raspberry Pi command) will not update this counter!_|
+|**0x09**<br>**0x0A**<br>**0x0B**| LED Active Mode parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when in active mode (after initialization): <br>• Register **0x09**: The LED _duty_ cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0A**: The LED _ON_ time (each increment corresponds to 20ms). <br>• Register **0x0B**: The LED _Period_ time (each increment corresponds to 20ms).|
+|**0x0C**<br>**0x0D**<br>**0x0E**| LED I2C Transmit Signaling parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when an I2C transmission finishes - end bit detected:<br>• Register **0x0C**: The LED _duty_ cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0D**: The LED _ON_ time (each increment corresponds to 20ms). <br>• Register **0x0E**: The LED _Period_ time (each increment corresponds to 20ms).|
 |**0x0F**| ATTiny Reset Cause | Written by **Client** only. | See the Register **RSTFR** in the ATTiny402 datasheet.|
 |**0x10**<br>**0x11**| ATTiny ADC Reading (Temperature) | Written by **Client** only. | Latest ADC Reading for the ATTiny temperature. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register Address **0x10** contains the LSB, and Register Address **0x11** contains the MSB.|
-|**0x12**<br>**0x13**| ATTiny Sigrow Offset / Gain | Written by **Client** only. | Device calibration for the ATTiny temperature measuremntes. Updated only at reset, as it is fexed for each ATTiny device. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register **0x12**: Sigrow Offset. <br>• Register **0x13**: Sigrow Gain.|
+|**0x12**<br>**0x13**| ATTiny Sigrow Offset / Gain | Written by **Client** only. | Device calibration for the ATTiny temperature measurements. Updated only at reset, as it is fixed for each ATTiny device. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register **0x12**: Sigrow Offset. <br>• Register **0x13**: Sigrow Gain.|
 |**0x14**<br>**0x15**| SW Version | Written by **Client** only. | SW version as a 16 bit unsigned integer. Register Address **0x14** contains the LSB, and Register Address **0x15** contains the MSB.|
 
 ## LED
@@ -289,7 +286,7 @@ The Client Address is 0x1E (see the [I2C0_Client Config](#I2C0_Client) for more 
 > REMARK: Transmit Signaling has priority over Active mode, meaning if the LED should be ON for Transmit Signaling, but OFF for Active mode, it will be ON.
 
 ## ADC
-- The ADC module just performs the ADC conversion for the tempoerature channel. The temperature calculation can be performed by the Raspberry Pi using this reading and the temperature calibration fields in order to save program space on the ATTiny.
+- The ADC module just performs the ADC conversion for the temperature channel. The temperature calculation can be performed by the Raspberry Pi using this reading and the temperature calibration fields in order to save program space on the ATTiny.
 > REMARK: No action is done by ATTiny with the ADC Reading. It is up to the Raspberry Pi to decide what to do with this information.
 
 ## EEPROM
