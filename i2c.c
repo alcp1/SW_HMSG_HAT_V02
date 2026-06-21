@@ -135,7 +135,7 @@ void i2c_init(void)
 {    
     // Init I2C
     I2C0_Client.Initialize();
-    // Set I2C Client callback
+    // Set I2C Client callback (has to be called after I2C0_Client.Initialize)
     I2C0_Client.CallbackRegister(Client_Application);
     // Clear Error
     g_errorState = I2C_CLIENT_ERROR_NONE;

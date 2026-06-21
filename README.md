@@ -3,8 +3,8 @@
 
 ## Overall Description
 - ATTiny communicates with the Raspberry Pi through I2C. The device address, and the registers can be found below on the [I2C section](#i2c).
-- The Raspberry Pi can configure the ATTiny as an external Watchdog. In this case, if the Raspberry Pi fails to clear a _Reset Timer_ through an I2C command, the ATTiny will cycle the power. All the timing parameters are described in the [I2C section](#i2c).
-- If the ATTiny cycles the power due to this _Reset Timer_ expiring, on the next power up, it will no longer cycle the power until the Raspberry Pi enables the External Watchdog functionality again (this means the ATTiny will perform a single power cycle to recover the Raspberry Pi when _Reset Timer_ expires).
+- The Raspberry Pi can configure the ATTiny as an external Watchdog. In this case, if the Raspberry Pi fails to clear a _Reset Timer_ before a _Reset Timer Limit_ through an I2C command, the ATTiny will cycle the power. All the timing parameters are described in the [I2C section](#i2c).
+- The _Reset Timer Limit_ initially is set to a higher, fixed value. After the communication between the ATTiny and Raspberry Pi is established, the Raspberry Pi can change it to a lower value.
 - The behaviour of the LED controlled by ATTiny (LED3 on the board) can be found below on the [LED section](#led).
 
 ## Structure
@@ -14,11 +14,11 @@
 | _build                             | The [CMake build tree](https://cmake.org/cmake/help/latest/manual/cmake.1.html#introduction-to-cmake-buildsystems), can be deleted. |
 | cmake                              | Generated [CMake](https://cmake.org/) files. May be deleted if user.cmake has not been added                                        |
 | .vscode                            | See [VSCode](https://code.visualstudio.com/docs/getstarted/settings)                                                                |
-| .vscode\settings.json              | Workspace specific settings                                                                                                         |
-| .vscode\SW_HMSG_HAT_V02.mplab.json | The MPLAB project file, should not be deleted                                                                                       |
+| .vscode/settings.json              | Workspace specific settings                                                                                                         |
+| .vscode/SW_HMSG_HAT_V02.mplab.json | The MPLAB project file, should not be deleted                                                                                       |
 | out                                | Final build artifacts                                                                                                               |
 
-## Remarks about VS Code:
+## Remarks about VS Code
 An error message may show up upon opening the MPLAB project folder about the path length: 
 ```text
 CMake Generate successful but is exceeding path limitations. (exit code 0)
@@ -55,8 +55,8 @@ On the left menu, select "Device Resource", and add the following items:
 ## MCC Config - Modules
 ### System
 #### Interrupt Manager
-- Global Interrupt Enable: **ON** (button in _ON_)
-- Round-robin Scheduling Enable: **OFF** (button in _OFF_)
+- Global Interrupt Enable: **ON** (button is ON)
+- Round-robin Scheduling Enable: **OFF** (button is OFF)
 - Interrupt Level Priority: **0**
 - Interrupt Vector with High Priority: **0**
 
@@ -69,7 +69,7 @@ On the left menu, select "Device Resource", and add the following items:
 - BOOTEND: 0 ≤ **0**
 - OSCCFG - Frequency Select: **20 MHz**
 - SYSCFG0 - CRC Source: **Disable CRC**
-- EEPROM Save: **OFF** (button in _OFF_)
+- EEPROM Save: **OFF** (button is OFF)
 - Reset Pin Configuration: **UPDI Mode**
 - SYSCFG1 - Startup Time: **4ms**
 - WDTCFG - Watchdog Timeout Period: **32 cycles (32ms)**
@@ -81,16 +81,16 @@ On the left menu, select "Device Resource", and add the following items:
 - Generate Initializer Code: **Initialize all registers**
 - CLKCTRL Settings - Clock Source: **20MHz internal oscillator**
 - CLKCTRL Settings - Internal Oscillator Frequency: **20 MHz**
-- CLKCTRL Settings - Prescaler enable: **ON** (button in _ON_)
+- CLKCTRL Settings - Prescaler enable: **ON** (button is ON)
 - CLKCTRL Settings - Prescaler division: **4X**
-- CLKCTRL Settings - System clock out: **OFF** (button in _OFF_)
-- Advanced Settings - lock enable: **OFF** (button in _OFF_)
-- Advanced Settings - Run standby 20MHz Oscillator: **OFF** (button in _OFF_)
-- Advanced Settings - Run standby 32.768kHz Oscillator: **OFF** (button in _OFF_)
+- CLKCTRL Settings - System clock out: **OFF** (button is OFF)
+- Advanced Settings - lock enable: **OFF** (button is OFF)
+- Advanced Settings - Run standby 20MHz Oscillator: **OFF** (button is OFF)
+- Advanced Settings - Run standby 32.768kHz Oscillator: **OFF** (button is OFF)
 
 #### Pins
 - Pin Name: **PA1** 
-  - Module: **TWAI0** _(should already be set - greyed out)_
+  - Module: **TWI0** _(should already be set - greyed out)_
   - Function: **SDA** _(should already be set - greyed out)_
   - Direction: **in/out** _(should already be set - greyed out)_
   - Custom Name: **IO_PA1**
@@ -100,7 +100,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
 
 - Pin Name: **PA2** 
-  - Module: **TWAI0** _(should already be set - greyed out)_
+  - Module: **TWI0** _(should already be set - greyed out)_
   - Function: **SCL** _(should already be set - greyed out)_
   - Direction: **in/out** _(should already be set - greyed out)_
   - Custom Name: **IO_PA2**
@@ -140,7 +140,7 @@ On the left menu, select "Device Resource", and add the following items:
   - Input/Sense Configuration [ISC]: **Interrupt disabled but input buffer enabled**
 
 #### WDT
-- Lock enable: **ON** (button in _ON_)
+- Lock enable: **ON** (button is ON)
 
 #### RSTCTRL
 - RSTCTRL Enable: **ON** _(should already be set - greyed out)_
@@ -150,8 +150,8 @@ On the left menu, select "Device Resource", and add the following items:
 - BOD Level: **2.6 V**
 - BOD Sample Frequency: **1kHz**
 - BOD Operation in Sleep Mode: **Enabled**
-- VLM Interrupt Enable: **OFF** (button in _OFF_)
-- VLM Interrupt Flag: **OFF** (button in _OFF_)
+- VLM Interrupt Enable: **OFF** (button is OFF)
+- VLM Interrupt Flag: **OFF** (button is OFF)
 - VLM Configuration: **Interrupt when supply goes below VLM level**
 - VLM Level: **VLM Level**
 
@@ -159,29 +159,29 @@ On the left menu, select "Device Resource", and add the following items:
 #### TCA0
 - Custom Name: **TCA0**
 - Generate Initializer Code: **Generate Initializer Code**
-- Timer Enable: **ON** (button in _ON_)
-- Run Standby Mode: **OFF** (button in _OFF_)
+- Timer Enable: **ON** (button is ON)
+- Run Standby Mode: **OFF** (button is OFF)
 - Timer Mode: **16 Bit (Normal)**
 - Clock Select: **System Clock / 4**
 - Count Direction: **UP**
 - Requested Period: 2.4µs ≤ **204.8µs** ≤ 52.4288ms
 - Event Action A: **POSEDGE**
 - Waveform Generation Mode: **Single Slope PWM**
-- Compare Channel 0 Enable: **ON** (button in _ON_)
+- Compare Channel 0 Enable: **ON** (button is ON)
 - Duty Cycle 0 (%): 0 ≤ **0** ≤ 100
-- Compare Channel 1 Enable: **OFF** (button in _OFF_)
-- Compare Channel 2 Enable: **OFF** (button in _OFF_)
-- Overflow Interrupt Enable: **OFF** (button in _OFF_)
-- Compare Channel 0 Interrupt Enable: **OFF** (button in _OFF_)
-- Compare Channel 1 Interrupt Enable: **OFF** (button in _OFF_)
-- Compare Channel 2 Interrupt Enable: **OFF** (button in _OFF_)
-- Generate ISR: **OFF** (button in _OFF_)
+- Compare Channel 1 Enable: **OFF** (button is _OFF_)
+- Compare Channel 2 Enable: **OFF** (button is _OFF_)
+- Overflow Interrupt Enable: **OFF** (button is _OFF_)
+- Compare Channel 0 Interrupt Enable: **OFF** (button is _OFF_)
+- Compare Channel 1 Interrupt Enable: **OFF** (button is _OFF_)
+- Compare Channel 2 Interrupt Enable: **OFF** (button is _OFF_)
+- Generate ISR: **OFF** (button is _OFF_)
 > **REMARK**: Requested Period is set to 204.8µs so that TCA0.SINGLE.PER = 0xFF. **CALCULATION**: main clock is 20MHz divided by 4, which is 5MHz. Module clock is main clock divided by 4, which is 1.25MHz. Requested period = 256*(1/1.25MHz)
 
 #### Timer0
 - Custom Name: **Timer0**
-- Timer Enable: **ON** (button in _ON_)
-- Interrupt Driven: **ON** (button in _ON_)
+- Timer Enable: **ON** (button is ON)
+- Interrupt Driven: **ON** (button is ON)
 - Requested Timer Period: 400ns ≤ **20**ms ≤ 26.214ms
 - Timer PLIB Selector: **TCB0**
 ##### Timer0 - TCB0
@@ -204,28 +204,28 @@ On the left menu, select "Device Resource", and add the following items:
 - Capture/Timeout Interrupt Enable: **ON** _(should already be set - greyed out)_
 
 #### NVM
-- Generate Flash APIs: **ON** (button in _ON_)
-- Place Functions in Custom Segment: **OFF** (button in _OFF_)
-- Application Code Section Write Protect: **OFF** (button in _OFF_)
-- Boot Section Lock: **OFF** (button in _OFF_)
-- Generate EEPROM APIs: **ON** (button in _ON_)
-- Generate Signature Row APIs: **OFF** (button in _OFF_)
-- Generate Fuse APIs: **OFF** (button in _OFF_)
-- Enable EEPROM Ready Interrupt: **OFF** (button in _OFF_)
+- Generate Flash APIs: **ON** (button is ON)
+- Place Functions in Custom Segment: **OFF** (button is OFF)
+- Application Code Section Write Protect: **OFF** (button is OFF)
+- Boot Section Lock: **OFF** (button is OFF)
+- Generate EEPROM APIs: **ON** (button is ON)
+- Generate Signature Row APIs: **OFF** (button is OFF)
+- Generate Fuse APIs: **OFF** (button is OFF)
+- Enable EEPROM Ready Interrupt: **OFF** (button is OFF)
 
 #### ADC0
 - Custom Name: **ADC0**
-- Hardware Settings - Enable ADC: **ON** (button in _ON_)
+- Hardware Settings - Enable ADC: **ON** (button is ON)
 - Hardware Settings - Input Configuration: **Single-Ended**
 - Hardware Settings - Result Alignment: **Right**
 - Hardware Settings - Resolution Selection: **10-bit mode**
 - Hardware Settings - Positive Input Channel: **TEMPSENSE**
 - Hardware Settings - Positive Voltage Reference: **INTREF**
-- Hardware Settings - Start Event Input Enable: **OFF** (button in _OFF_)
-- Hardware Settings - Free-Running Mode Enable: **ON** (button in _ON_)
-- Hardware Settings - Run in Standby Mode Enable: **OFF** (button in _OFF_)
-- Hardware Settings - Run in Debug Mode Enable: **OFF** (button in _OFF_)
-- Hardware Settings - Sample Capacitance Selection: **ON** (button in _ON_)
+- Hardware Settings - Start Event Input Enable: **OFF** (button is OFF)
+- Hardware Settings - Free-Running Mode Enable: **ON** (button is ON)
+- Hardware Settings - Run in Standby Mode Enable: **OFF** (button is OFF)
+- Hardware Settings - Run in Debug Mode Enable: **OFF** (button is OFF)
+- Hardware Settings - Sample Capacitance Selection: **ON** (button is ON)
 - Computation Settings - Computation Mode: **Basic**
 - Computation Settings - Window Comparator Mode: **No Window Comparison**
 - Computation Settings - Upper Threshold: -32768 ≤ **0**
@@ -247,10 +247,10 @@ On the left menu, select "Device Resource", and add the following items:
 - Client Mask: 0x0 ≤ **0x00** ≤ 0x7F
 - I2C Client PLIB Selector: **TWI0**
 ##### I2C0_Client - TWI0_Peripheral
-- Interrupt Driven: **ON** (button in _ON_)
-- General Call Address Recognition: **ON** (button in _ON_)
-- Address/Stop Interrupt Enable: **ON** (button in _ON_)
-- Data Interrupt Enable: **ON** (button in _ON_)
+- Interrupt Driven: **ON** (button is _ON_)
+- General Call Address Recognition: **ON** (button is _ON_)
+- Address/Stop Interrupt Enable: **ON** (button is _ON_)
+- Data Interrupt Enable: **ON** (button is _ON_)
 - Stop Interrupt Enable: **ON** _(should already be set - greyed out)_
 
 #### Main 
@@ -269,15 +269,15 @@ The Client Address is 0x1E (see the [I2C0_Client Config](#i2c0_client) for more 
 |**0x00**| Raspberry Pi Command | Written by **Host** only. | Commands sent from the Raspberry Pi: <br>• **0x01**: Reset the _Reset Timer_<br> • **0x11**: Reboot ATTiny <br> • **0x21**: Cycle Power in x seconds (_see address **0x01**_)<br> • **Other values**: Ignored<br>|
 |**0x01**| Power Off Delay | Written by **Host** only. | Seconds to wait for a "Cycle Power" when this command is issued (_see Register **0x00** command **0x21**_).|
 |**0x02**| Raspberry Pi Watchdog Enable | Written by **Host** only. | If set to **0x63**, ATTiny will update the _Reset Timer_ (see register address _**0x03**_ and _**0x04**_) every second, and if it reaches the _Reset Timer Limit_ (see register address _**0x05**_ and _**0x06**_), the ATtiny will cycle the power.|
-|**0x03**<br>**0x04**| Reset Timer | Written by **Host** and **Client**. | _Reset Timer_ is a 16 bit counter updated every second. Register Address **0x03** contains the LSB, and Register Address **0x04** contains the MSB.|
-|**0x05**<br>**0x06**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value compared with _Reset Timer_. Register Address **0x05** contains the LSB, and Register Address **0x06** contains the MSB.|
-|**0x07**<br>**0x08**| Reset Counter | Written by **Host** and **Client**. | _Reset Counter_ is a 16 bit value saved on the ATTiny EEPROM that counts how many times the ATTiny has cycled the power, triggered by the watchdog mechanism (_Reset Timer_ > _Reset Timer Limit_). Register Address **0x07** contains the LSB, and Register Address **0x08** contains the MSB. <br><br> _**REMARK:** Other Power Cycle mechanisms (such as Raspberry Pi command) will not update this counter!_|
+|**0x03** - **0x04**| Reset Timer | Written by **Host** and **Client**. | _Reset Timer_ is a 16 bit counter updated every second. Register Address **0x03** contains the LSB, and Register Address **0x04** contains the MSB.|
+|**0x05** - **0x06**| Reset Timer Limit | Written by **Host** only. <br> _After reset, it is written by Client_. | _Reset Timer Limit_ is a 16 bit value compared with _Reset Timer_. Register Address **0x05** contains the LSB, and Register Address **0x06** contains the MSB.|
+|**0x07** - **0x08**| Reset Counter | Written by **Host** and **Client**. | _Reset Counter_ is a 16 bit value saved on the ATTiny EEPROM that counts how many times the ATTiny has cycled the power, triggered by the watchdog mechanism (_Reset Timer_ > _Reset Timer Limit_). Register Address **0x07** contains the LSB, and Register Address **0x08** contains the MSB. <br><br> _**REMARK:** Other Power Cycle mechanisms (such as Raspberry Pi command) will not update this counter!_|
 |**0x09**<br>**0x0A**<br>**0x0B**| LED Active Mode parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when in active mode (after initialization): <br>• Register **0x09**: The LED _duty_ cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0A**: The LED _ON_ time (each increment corresponds to 20ms). <br>• Register **0x0B**: The LED _Period_ time (each increment corresponds to 20ms).|
 |**0x0C**<br>**0x0D**<br>**0x0E**| LED I2C Transmit Signaling parameters | Written by **Host** only. <br> _After reset, it is written by Client_. |Describes how the LED behaves when an I2C transmission finishes - end bit detected:<br>• Register **0x0C**: The LED _duty_ cycle. 0 means 0%, and 255 means 100% duty cycle for the LED. <br>• Register **0x0D**: The LED _ON_ time (each increment corresponds to 20ms). <br>• Register **0x0E**: The LED _Period_ time (each increment corresponds to 20ms).|
 |**0x0F**| ATTiny Reset Cause | Written by **Client** only. | See the Register **RSTFR** in the ATTiny402 datasheet.|
-|**0x10**<br>**0x11**| ATTiny ADC Reading (Temperature) | Written by **Client** only. | Latest ADC Reading for the ATTiny temperature. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register Address **0x10** contains the LSB, and Register Address **0x11** contains the MSB.|
-|**0x12**<br>**0x13**| ATTiny Sigrow Offset / Gain | Written by **Client** only. | Device calibration for the ATTiny temperature measurements. Updated only at reset, as it is fixed for each ATTiny device. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register **0x12**: Sigrow Offset. <br>• Register **0x13**: Sigrow Gain.|
-|**0x14**<br>**0x15**| SW Version | Written by **Client** only. | SW version as a 16 bit unsigned integer. Register Address **0x14** contains the LSB, and Register Address **0x15** contains the MSB.|
+|**0x10** - **0x11**| ATTiny ADC Reading (Temperature) | Written by **Client** only. | Latest ADC Reading for the ATTiny temperature. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register Address **0x10** contains the LSB, and Register Address **0x11** contains the MSB.|
+|**0x12** - **0x13**| ATTiny Sigrow Offset / Gain | Written by **Client** only. | Device calibration for the ATTiny temperature measurements. Updated only at reset, as it is fixed for each ATTiny device. See "Temperature Measurement" in the datasheet for the calculations to be performed to get the temperature in K. Register **0x12**: Sigrow Offset. <br>• Register **0x13**: Sigrow Gain.|
+|**0x14** - **0x15**| SW Version | Written by **Client** only. | SW version as a 16 bit unsigned integer. Register Address **0x14** contains the LSB, and Register Address **0x15** contains the MSB.|
 
 ## LED
 - After reset, the LED will linearly increase the duty cycle from 0% to 100% (init mode).
