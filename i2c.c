@@ -132,11 +132,11 @@ static bool Client_Application(i2c_client_transfer_event_t event)
 
 /* Initialization */
 void i2c_init(void)
-{
-    // Set I2C Client callback
-    I2C0_Client.CallbackRegister(Client_Application);
+{    
     // Init I2C
     I2C0_Client.Initialize();
+    // Set I2C Client callback
+    I2C0_Client.CallbackRegister(Client_Application);
     // Clear Error
     g_errorState = I2C_CLIENT_ERROR_NONE;
 }

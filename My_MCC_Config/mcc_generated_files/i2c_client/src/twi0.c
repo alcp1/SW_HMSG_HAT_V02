@@ -12,7 +12,7 @@
   * @version TWI0 Package Version 7.1.6
 */
 /*
-© [2026] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -88,10 +88,10 @@ void TWI0_Initialize(void)
     TWI0.SADDR = 0x3D;
     
     //ADDREN disabled; ADDRMASK 127; 
-    TWI0.SADDRMASK = 0xFE;
+    TWI0.SADDRMASK = 0x00;
     
     //APIEN enabled; DIEN disabled; ENABLE enabled; PIEN enabled; PMEN disabled; SMEN disabled; 
-    TWI0.SCTRLA = 0x61;
+    TWI0.SCTRLA = 0xE1;
     
     //ACKACT ACK; SCMD NOACT; 
     TWI0.SCTRLB = 0x0;
